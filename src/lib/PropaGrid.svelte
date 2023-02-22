@@ -238,14 +238,14 @@ export let scale = 1;
             class="pro-grid {className}" id="{id}"
             class:default-dimensions={!width || !height}
             style="
-                --propaganda-grid-height : { Number(height) ? height + '%' : height };
-                --propaganda-grid-width : { Number(width) ? width + '%' : width };
-                --propaganda-grid-gap : { gap };
-                --propaganda-grid-rows : { _rowSize };
-                --propaganda-grid-columns : { _colSize };
-                --propaganda-grid-fontsize : { Number(fontSize) ? fontSize + 'rem' : fontSize };
-                --propaganda-cell_overflow : { cellOverflow };
-                --propaganda-grid-bg : { background };
+                --propa-grid_height : { Number(height) ? height + '%' : height };
+                --propa-grid_width : { Number(width) ? width + '%' : width };
+                --propa-grid-gap : { gap };
+                --propa-grid_rows : { _rowSize };
+                --propa-grid_columns : { _colSize };
+                --propa-grid_fontsize : { Number(fontSize) ? fontSize + 'rem' : fontSize };
+                --propa-cell_overflow : { cellOverflow };
+                --propa-grid_bg : { background };
                 aspect-ratio : { aspectRatio };
                 z-index:{ zIndex };
                 transform:matrix({ scale },0.00,0.00,{ scale },0,0);
@@ -260,11 +260,11 @@ export let scale = 1;
     <style>
 
     :global(:root) {
-        --pro-grid_border:"none";
+        --propa-grid_border:"none";
     }
     .pro-grid {
         display: grid;
-        background : var(--propaganda-grid-bg);
+        background : var(--propa-grid_bg);
         justify-content: center;
         align-content: center;
         align-items: center;
@@ -272,11 +272,11 @@ export let scale = 1;
         position: absolute;
         z-index: 1;
         transform : translateZ(0);
-        height:var(--propaganda-grid-height); 
-        width: var(--propaganda-grid-width); 
-        grid-gap: var(--propaganda-grid-gap); 
-        grid-template-rows: var(--propaganda-grid-rows); 
-        grid-template-columns: var(--propaganda-grid-columns); 
+        height:var(--propa-grid_height); 
+        width: var(--propa-grid_width); 
+        grid-gap: var(--propa-grid-gap); 
+        grid-template-rows: var(--propa-grid_rows); 
+        grid-template-columns: var(--propa-grid_columns); 
     }
 
     .default-dimensions {
@@ -286,15 +286,16 @@ export let scale = 1;
     .pro-grid > :global(*) {
       /*position: absolute;*/
       box-sizing: border-box;
-      border: var(--pro-grid_border);
+      border: var(--propa-grid_border);
       display: flex;
       aspect-ratio: 1;
+      width:var(--propa-cell-width);
       justify-content: center;
       min-height: fit-content;
       align-items: center;
-      font-size: var(--propaganda-grid-fontsize);
+      font-size: var(--propa-grid_fontsize);
       align-content: unset;
-      overflow: var(--propaganda-cell_overflow);
+      overflow: var(--propa-cell_overflow);
     }
    
     </style>

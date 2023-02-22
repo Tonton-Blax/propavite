@@ -47,9 +47,9 @@
         <div
             class="pro-layer" id={id}
             style="
-                --pro-layer-width:{width};
+                --propa-layer-width:{width};
                 --propa-layer_direction:{direction};
-                --pro-layer-height:{height};
+                --propa-layer-height:{height};
                 z-index:{zIndex || 0 };
                 margin:{margin};
             "
@@ -65,7 +65,7 @@
     <style>
     
     :global(:root) {
-        --pro-grid_border:"none";
+        --propa-grid_border:"none";
     }
     
     .pro-layer {
@@ -77,8 +77,8 @@
         padding : 0;
         position: absolute;
         z-index: 1;
-        width:var(--pro-layer-width);
-        height:var(--pro-layer-height);
+        width:var(--propa-layer-width);
+        height:var(--propa-layer-height);
     }
     
     

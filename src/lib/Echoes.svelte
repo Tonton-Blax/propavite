@@ -108,9 +108,9 @@
         class="propaganda-echoes_wrapper" 
         class:has-perspective={!options.isoMetric}
         style="
-        --propaganda-echoes-mod-x: { perspectiveOrigin[0] || echoesDistance * Math.sin(angle * ( Math.PI / 180 )) }%;
-        --propaganda-echoes-mod-y: { perspectiveOrigin[1] || 100 + (echoesDistance * Math.cos(angle * (Math.PI / 180)))}%;
-        --propaganda-echoes_perspective: {perspective || 'unset'}ch;
+        --propa-echoes-mod-x: { perspectiveOrigin[0] || echoesDistance * Math.sin(angle * ( Math.PI / 180 )) }%;
+        --propa-echoes-mod-y: { perspectiveOrigin[1] || 100 + (echoesDistance * Math.cos(angle * (Math.PI / 180)))}%;
+        --propa-echoes_perspective: {perspective || 'unset'}ch;
         --propa-title_bg:{bg};
         --propa-title_halign:{flexAlignMap[hAlign]};
         --propa-title_fontSize:{options.fontSize}vmin;
@@ -216,8 +216,8 @@
         z-index: 1;
     }
     .has-perspective {
-        perspective-origin: var(--propaganda-echoes-mod-x) var(--propaganda-echoes-mod-y);
-        perspective: var(--propaganda-echoes_perspective);
+        perspective-origin: var(--propa-echoes-mod-x) var(--propa-echoes-mod-y);
+        perspective: var(--propa-echoes_perspective);
     }
 
       

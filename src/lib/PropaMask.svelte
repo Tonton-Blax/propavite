@@ -17,7 +17,7 @@
   export let y='50%';
   export let animations=null;
   export let fillColor="white";
-  export let lineSpacing=10;
+  export let lineSpacing=fontSize*0.75;
   export let id=makeId();
 	export let unit = 'px';
 	export let origin = "50% 50%";
@@ -124,6 +124,7 @@
   clip-path: url(#propa-mask);
   position: absolute;
 }
+
 .mask-wrapper {
   width: 100%;
   display:flex;

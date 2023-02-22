@@ -23,7 +23,7 @@
     import { onScrollAssets, typographicPaths, animAssets, typographicScrollProgress  } from './propassets';
 
 
-    let isMobile = window.matchMedia("(orientation : portrait), (max-width : 675px)").matches;
+    let isMobile = window.matchMedia("(orientation : portrait), (max-width : 768px)").matches;
     let aspectRatio = isMobile ? document.documentElement.clientWidth / document.documentElement.clientHeight : 16 / 9;
     
     let onScrolls = {};
@@ -334,13 +334,12 @@
                 id="mask-test"
                 styles={{opacity:1}}
                 clipPath={true}
-                fontSize={1000}
+                fontSize={isMobile ? 200 : 1000}
                 zIndex={4}
                 font={'mostra-nuova'}
                 zWrapper={5}
                 fillColor={'white'}
-                text={"OR"} 
-                lineSpacing={7.3}
+                text={isMobile ? "O\nR" : "OR"} 
                 overlayOpacity={null}
                 onScroll={onScrolls.retrochic}
             >
@@ -348,18 +347,19 @@
 
                 <svelte:fragment slot="mask-bg">
 
-                    <div class="retrochic-container flexed" style="width:100%;height:100%;opacity:0.0;" >
+                    <div class="retrochic-container flexed" >
                         <img class="retrochic" src="/pg-bg.png" alt="retrochic">
                     </div>
                     <PropaGrid
                         {container}
-                        grid={[6,4]}
+                        grid={isMobile ? [4,6] : [6,5]}
                         cellOverflow={'visible'}
                         background={'black'}
                         id={'retrochic-grid'}
                         animations={anims.retrochic}
+                        height={'100vh'}
                     >
-                        {#each { length : 24 } as _,i}
+                        {#each { length : isMobile ? 24 : 30 } as _,i}
                             <div class="retrochic-element">
                                 <img src="pg-fg.png" alt="texture" class="retrochic-img">
                             </div>
@@ -560,7 +560,15 @@
         left: 50%;
         z-index: 4;
         transform: translate(-50%, -50%);
+        width:100%;
+        height:100%;
+        opacity:0.0;
     }
+
+    .retrochic-container > img {
+        max-width: 90vw;
+    }
+
     /* :global(#propa-retrochic > .propaganda-wrapper_image) {
         background: url(/../pg-bg.png) no-repeat center;
         background-size: calc(100% - 200px)!important;
@@ -658,6 +666,19 @@
         }
         #mask-opening-bottom {
             border-bottom: 40vh solid white;
+        }
+        .poetic {
+            height: 40vw;
+            width: 30vw;
+        }
+        .poetic > * {
+            height: 100%;
+            width: auto;
+        }
+        
+        .retrochic-element > img {
+            width:150%;
+            height:150%;
         }
     }
     @media (min-width: 768px) and (orientation: landscape) { 

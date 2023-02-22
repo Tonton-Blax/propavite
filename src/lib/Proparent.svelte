@@ -51,7 +51,7 @@
         const scrollTrigger = {
             trigger: container,
             pin:    true,
-            scrub : true,
+            scrub : 2,
             start: "top top",
             end: end ?? '+=500%',
             onUpdate: self => {progress = self && self?.progress },
@@ -81,11 +81,11 @@
     style:overflow={overflow}
     style:max-height={Number(height) ? height + 'vh' : height }
     style="
-        --pro-grid-bgheight: {bgHeight};
-        --pro-grid_apsect-ratio: {aspectRatio};
-        --pro-wrapper-width : {width};
-        --pro-wrapper-height : {height};
-        --pro-gradient: {gradient};
+        --propa-grid_bgheight: {bgHeight};
+        --propa-grid_apsect-ratio: {aspectRatio};
+        --propa-wrapper-width : {width};
+        --propa-wrapper-height : {height};
+        --propa-gradient: {gradient};
         {style};
     "
     on:dblclick on:click on:contextmenu on:touchcancel on:touchstart on:touchend on:touchmove on:mouseenter on:mouseleave 
@@ -121,8 +121,8 @@
     overflow:clip;
     position:relative;
     z-index: 0;
-    width:var(--pro-wrapper-width);
-    height:var(--pro-wrapper-height);
+    width:var(--propa-wrapper-width);
+    height:var(--propa-wrapper-height);
 }
 .proparent-gradient:after{
     content: '';
@@ -131,7 +131,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(var(--pro-gradient));
+    background: linear-gradient(var(--propa-gradient));
 }
 
 .propaganda-wrapper_image {
@@ -139,7 +139,7 @@
     background : var(--proparent-bg);
     background-size: var(--proparent-bg-size);
     width: 100%; /* computed height will be 133.33px, which is width/aspect-ratio */
-    height:var(--pro-grid-bgheight);
+    height:var(--propa-grid_bgheight);
     transform: translateZ(0px);
     position: absolute;
     top:0;

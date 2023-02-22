@@ -107,13 +107,14 @@ export const onScrollAssets = (elementsCheesy, isMobile) =>  {
         retrochic : [
             {
                 target:'#propa-mask',
-                scale : 20,
+                scale : isMobile ? 50:20,
                 opacity:0,
-                transformOrigin : '45% 50%', 
+                transformOrigin : isMobile ? '45% 45%' : '45% 50%', 
                 set : { transformOrigin : '50% 50%' },
                 duration : 5,
                 ease:'power1.in'
-            }, {    
+            }, 
+            {    
                 target : '.retrochic-container',
                 autoAlpha : 1,
                 duration:4,
@@ -123,8 +124,8 @@ export const onScrollAssets = (elementsCheesy, isMobile) =>  {
                 set : { rotate : (i) => -Math.random()*360*(i+1) },
                 y : (i) => -window.innerHeight * 1.2,
                 duration : 10,
-                stagger : { grid : 'auto', from : 'edges', amount : 0.25 },
-                ease : 'power1.inOut',
+                stagger : { grid : 'auto', from : 'edges', each : 0.25 },
+                ease : 'power2.in',
                 time:'>+=10%'
             }
         ],
