@@ -162,7 +162,7 @@
             >
                 {#each {length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
                     <div class="reverbere" 
-                        style="width:{ (12 / elementsCheesy) + (i*3) }vw">
+                        style="width:{ ((isMobile ? 340 : 12) / elementsCheesy) + (i*3) }vw">
                         <img class="reverbere-img" src='/propaganda/miami/reverbere.webp' alt="palmier">
                     </div>
                 {/each}
@@ -178,7 +178,7 @@
         >
             {#each {length: isMobile ? elementsCheesy / 2 : elementsCheesy} as _, i}
                 <div class="palmier"
-                    style="width:{ (80/elementsCheesy) + (i*1.5) }vw"
+                    style="width:{ ((isMobile ? 380 : 80)/elementsCheesy) + (i*1.5) }vw"
                 >
                     <img class="palmier-img" src='/propaganda/miami/palmier-0{ (i%3) + 1 }.webp' alt="palmier">
                 </div>
@@ -645,6 +645,11 @@
 /* NOTE CSS BREAKPOINTS MOBILE */
 
     @media (max-width: 768px) and (orientation: portrait) { 
+
+        #title-whether {
+            white-space: break-spaces;
+            text-align: center;
+        }
         .title-wrapper > div {
             align-self: center;
             margin-right:0em;
