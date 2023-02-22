@@ -471,7 +471,7 @@
 
     /* Intro : image de fond, précédé de :global() car l'élément est défini dans un autre fichier */
     :global(#propa-1-grid) {
-        background: url(propaganda/p1-bg.jpg) repeat;
+        background: url(/propaganda/p1-bg.jpg) repeat;
     }
 
 /* NOTE CSS WHETHER YOU LIKE IT */
