@@ -1,14 +1,14 @@
 <script context="module">
     import gsap from 'gsap';
     import ScrollTrigger from 'gsap/ScrollTrigger';
-    gsap.config({ force3D : true, nullTargetWarn: true });
+    gsap.config({ force3D : false, nullTargetWarn: true });
     gsap.registerPlugin(ScrollTrigger);
     ScrollTrigger.clearScrollMemory( ) ;
     ScrollTrigger.config({limitCallbacks: true });
 </script>
 
 <script>
-    import { onMount, tick } from 'svelte';
+    import { onMount } from 'svelte';
     import { makeId, processStyles } from './utils';
     export let height = '100vh';
     export let width = '100%'
@@ -39,6 +39,7 @@
     export let visible = false;
     export let start;
     export let end;
+    export let exposeProgress = false;
 
     let bgParent;
 
@@ -54,19 +55,20 @@
             scrub : 2,
             start: "top top",
             end: end ?? '+=500%',
-            onUpdate: self => {progress = self && self?.progress },
             onEnter: ({ isActive}) => visible = true,
             onEnterBack: ({ isActive}) => visible = isActive,
             onLeave: ({ isActive}) => visible = false,
             ...scrollConfig
         };
+        if (exposeProgress)
+            scrollTrigger.onUpdate = self => {progress = self && self?.progress };
 
         timeline = gsap.timeline( { scrollTrigger } );
 
         if (!bgHeight || bgHeight === 'unset')
             bgParent.style.aspectRatio = aspectRatio;
 
-        ScrollTrigger.normalizeScroll();
+        //ScrollTrigger.normalizeScroll();
 
     });
 

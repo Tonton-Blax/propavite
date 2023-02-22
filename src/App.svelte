@@ -224,6 +224,7 @@
             end={'+=200%'}
             let:container
             let:timeline
+            exposeProgress={true}
             bind:progress={$typographicScrollProgress}
         >
             <div class="title-wrapper">
@@ -337,7 +338,6 @@
                 fontSize={isMobile ? 200 : 1000}
                 zIndex={4}
                 font={'mostra-nuova'}
-                zWrapper={5}
                 fillColor={'white'}
                 text={isMobile ? "O\nR" : "OR"} 
                 overlayOpacity={null}
@@ -360,8 +360,8 @@
                         height={'100vh'}
                     >
                         {#each { length : isMobile ? 24 : 30 } as _,i}
-                            <div class="retrochic-element">
-                                <img src="pg-fg.png" alt="texture" class="retrochic-img">
+                            <div class="retrochic-element" style="opacity:{0.25 + (Math.random() * 0.5)}">
+                                <img src="pg-fg.png" alt="texture" class="retrochic-img" >
                             </div>
                         {/each}
                     </PropaGrid>

@@ -120,6 +120,14 @@
 
 <style>
 
+#propa-mask {
+  transform-origin: center center;
+}
+
+svg {
+  shape-rendering: optimizeSpeed;
+}
+
 .masked {
   clip-path: url(#propa-mask);
   position: absolute;

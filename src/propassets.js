@@ -1,6 +1,12 @@
 import { writable } from "svelte/store";
 export const typographicScrollProgress = writable(0);
+
 const R = Math.PI / Math.E;
+
+const rdTable=[];
+for (let i = 0; i <= 1000; i++) {
+    rdTable.push(-500 + ((i+1) + (Math.random() * 500)));
+}
 
 export const onScrollAssets = (elementsCheesy, isMobile) =>  { 
     return {
@@ -83,8 +89,8 @@ export const onScrollAssets = (elementsCheesy, isMobile) =>  {
                 time:'<',
                 duration: 2,
                 rotateZ : (i) => 100 +( (i+1) * (Math.random() * 360)),
-                x : (i) => -500 + ((i+1) + (Math.random() * 500)),
-                y : (i) => -500 + ((i+1) + (Math.random() * 500)),
+                x : (i) => rdTable[i%1000],//-500 + ((i+1) + (Math.random() * 500)),
+                y : (i) => rdTable[(i+1)%1000]//-500 + ((i+1) + (Math.random() * 500)),
             }, {
                 target: '.poetic',
                 x: 0,
@@ -108,10 +114,8 @@ export const onScrollAssets = (elementsCheesy, isMobile) =>  {
             {
                 target:'#propa-mask',
                 scale : isMobile ? 50:20,
-                opacity:0,
-                transformOrigin : isMobile ? '45% 45%' : '45% 50%', 
-                set : { transformOrigin : '50% 50%' },
                 duration : 5,
+                ...(isMobile && { set : {"transform-origin" : "14vw 25vh"}}),
                 ease:'power1.in'
             }, 
             {    
@@ -195,14 +199,6 @@ export const animAssets = (echoes) => {
                 yoyo: false,
                 duration: 35,
                 ease:'linear',
-            },{
-                target : '.retrochic-element',
-                startAt :  { opacity : (_) => 0.5 + (Math.random() * 0.5) },
-                animType : 'from',
-                opacity : (i) => !(i%(Math.random()*2)) ? 0.5 + (Math.random()) : 1.2 - (Math.random()),
-                ease : "power1.inOut",
-                duration : 2,
-                delay : (i) => Math.random() * 5,
             }
         ]
     }
