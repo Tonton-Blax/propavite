@@ -115,7 +115,7 @@ export const onScrollAssets = (elementsCheesy, isMobile) =>  {
                 target:'#propa-mask',
                 scale : isMobile ? 50:20,
                 duration : 5,
-                ...(isMobile && { set : {"transform-origin" : "14vw 25vh"}}),
+                ...(isMobile ? { set : {"transform-origin" : "14vw 25vh"}} : { set : {"transform-origin" : `${window.innerWidth/2}px ${window.innerHeight/2}px`}}),
                 ease:'power1.in'
             }, 
             {    
