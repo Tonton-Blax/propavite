@@ -115,19 +115,21 @@ export const onScrollAssets = (elementsCheesy, isMobile) =>  {
                 target:'#propa-mask',
                 scale : isMobile ? 50:20,
                 duration : 5,
-                ...(isMobile ? { set : {"transform-origin" : "14vw 25vh"}} : { set : {"transform-origin" : `${window.innerWidth/2}px ${window.innerHeight/2}px`}}),
+                ...(isMobile ? { 
+                    set : {"transform-origin" : `${window.innerWidth/4}px ${window.innerHeight/3}px`}} 
+                    : { set : {"transform-origin" : `${window.innerWidth/2}px ${window.innerHeight/2}px`}}),
                 ease:'power1.in'
             }, 
             {    
                 target : '.retrochic-container',
                 autoAlpha : 1,
-                duration:4,
+                duration:3,
                 time : '<+=50%'
             },{
                 target : '.retrochic-element',
                 set : { rotate : (i) => -Math.random()*360*(i+1) },
                 y : (i) => -window.innerHeight * 1.2,
-                duration : 10,
+                duration : 3,
                 stagger : { grid : 'auto', from : 'edges', each : 0.25 },
                 ease : 'power2.in',
                 time:'>+=10%'

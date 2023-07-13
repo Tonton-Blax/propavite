@@ -12,7 +12,17 @@
     import {onMount,tick} from 'svelte';
     import  Echoes from "./lib/Echoes.svelte";
     import { onScrollAssets, typographicPaths, animAssets, typographicScrollProgress  } from './propassets';
-
+    import gsap from 'gsap';
+    import ScrollTrigger from 'gsap/ScrollTrigger';
+    import ScrollSmoother from './lib/ScrollSmoother';
+    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+    ScrollSmoother.create({
+        smooth: 1,               // how long (in seconds) it takes to "catch up" to the native scroll position
+        effects: true,           // looks for data-speed and data-lag attributes on elements
+        smoothTouch: 0.1,        // much shorter smoothing time on touch devices (default is NO smoothing on touch devices)
+    });
+    ScrollTrigger.clearScrollMemory( ) ;
+    ScrollTrigger.config({limitCallbacks: true });
 
     let isMobile = window.matchMedia("(orientation : portrait), (max-width : 768px)").matches;
     let aspectRatio = isMobile ? document.documentElement.clientWidth / document.documentElement.clientHeight : 16 / 9;
@@ -34,6 +44,7 @@
         onScrolls = onScrollAssets(elementsCheesy, isMobile);
         anims = animAssets(echoes);
         await tick();
+        ScrollSmoother.normalizeScroll = true;
     })
 
     const resizeObserver = new ResizeObserver(() => isMobile = window.matchMedia("(orientation : portrait), (max-width : 675px)").matches);
@@ -154,7 +165,7 @@
                 {#each {length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
                     <div class="reverbere" 
                         style="width:{ ((isMobile ? 340 : 12) / elementsCheesy) + (i*3) }vw">
-                        <img class="reverbere-img" src='/propaganda/miami/reverbere.webp' alt="palmier">
+                        <img class="reverbere-img" src='/propaganda/miami/reverbere.png' alt="palmier">
                     </div>
                 {/each}
         </PropaLayer>
@@ -171,7 +182,7 @@
                 <div class="palmier"
                     style="width:{ ((isMobile ? 380 : 80)/elementsCheesy) + (i*1.5) }vw"
                 >
-                    <img class="palmier-img" src='/propaganda/miami/palmier-0{ (i%3) + 1 }.webp' alt="palmier">
+                    <img class="palmier-img" src='/propaganda/miami/palmier-0{ (i%3) + 1 }.png' alt="palmier">
                 </div>
             {/each}
 
@@ -320,7 +331,7 @@
             id={'fish'}
             let:container
             let:timeline
-            end={'+=300%'}
+            end={'+=250%'}
         > 
             <PropaMask {container} {timeline}
                 id="mask-test"
@@ -363,7 +374,7 @@
         <!-- ANCHOR OR ___________________________________________________________________________-->
 
         <Proparent
-            pin={'+=100%'}
+            end={'+=100%'}
             bgColor={'black'}
         >
 
@@ -470,7 +481,6 @@
    
     #title-whether {
         mix-blend-mode: difference;
-        text-rendering: speed;
         z-index: 5;
         display: flex;
         width:100%;
