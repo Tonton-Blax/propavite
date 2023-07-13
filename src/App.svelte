@@ -192,11 +192,11 @@
             id={'cheesy'} 
             zIndex={9}
             perspective={100}
-            perspectiveOrigin={ [ -100, 200 ] }
+            perspectiveOrigin={ isMobile ? [ 100, 400 ] : [ -100, 200 ] }
             styles={{paddingRight : '4vw', fontFamily: `'M PLUS Rounded 1c', sans-serif`, fontWeight : 500, opacity : .85 }}
             title={"CHEESY"}
             angle={100}
-            echoesDistance={14}
+            echoesDistance={isMobile ? 30 : 14}
             {echoes}
             options={{ 
                 transparency:10, 
@@ -456,6 +456,7 @@
         margin-right: 1.5%;
         letter-spacing: -0.1ex;
         font-variation-settings: 'wght' 515, 'wdth' 115;
+        color:black;
     }
     #title-propaganda, #punch-line {
         font-family: Acumin Variable Concept;
