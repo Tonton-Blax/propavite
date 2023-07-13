@@ -1,12 +1,3 @@
-<svelte:head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://use.typekit.net/cww5rew.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,100,100;8..144,151,1000&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@700&display=swap" rel="stylesheet">
-</svelte:head>
-<svelte:window on:resize={resize} />
 <script>
     // ORDRE : intro - minimalist - cheesy - typo - poetic - aquatic OR chic
     // OR MUESTRA NUEVA APPROCHE RESSEREE
@@ -38,16 +29,16 @@
     const echoes = isMobile ? 6 : 10;
 
     onMount(async()=>{
-        resize();
+        resizeObserver.observe(document.querySelector('#app'));
         document.body.style.background='white';
         onScrolls = onScrollAssets(elementsCheesy, isMobile);
         anims = animAssets(echoes);
         await tick();
     })
 
-    const clamp = (n, min, max) => n > max ? max : n < min ? min : n;
+    const resizeObserver = new ResizeObserver(() => isMobile = window.matchMedia("(orientation : portrait), (max-width : 675px)").matches);
 
-    const resize = () =>  isMobile = window.matchMedia("(orientation : portrait), (max-width : 675px)").matches;
+    const clamp = (n, min, max) => n > max ? max : n < min ? min : n;
 
     let interpolators = typographicPaths.map((p,i) => {
         if (Array.isArray(p))

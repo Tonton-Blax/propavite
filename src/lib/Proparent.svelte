@@ -4,6 +4,7 @@
     gsap.config({ force3D : false, nullTargetWarn: true });
     gsap.registerPlugin(ScrollTrigger);
     ScrollTrigger.clearScrollMemory( ) ;
+    ScrollTrigger.normalizeScroll()
     ScrollTrigger.config({limitCallbacks: true });
 </script>
 
