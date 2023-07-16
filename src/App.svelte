@@ -22,18 +22,18 @@
     //     smoothTouch: 0.1,        // much shorter smoothing time on touch devices (default is NO smoothing on touch devices)
     // });
     ScrollTrigger.clearScrollMemory( ) ;
-    ScrollTrigger.config({limitCallbacks: true });
-
-    let isMobile = window.matchMedia("(orientation : portrait), (max-width : 768px)").matches;
-    let aspectRatio = isMobile ? document.documentElement.clientWidth / document.documentElement.clientHeight : 16 / 9;
-    
-    let onScrolls = {};
-    let anims = {};
-    let echoesVisible = false;
-
+    ScrollTrigger.config({limitCallbacks: true, ignoreMobileResize: true });
     const elementsCheesy = 8;
 
+    let isMobile = window.matchMedia("(orientation : portrait), (max-width : 675px)").matches;
+    $: onScrolls = onScrollAssets(elementsCheesy, isMobile);
+    $: anims = animAssets(echoes);
+    $: aspectRatio = isMobile ? document.documentElement.clientWidth / document.documentElement.clientHeight : 16 / 9;
     $: grid = isMobile ?  [3,7] : [9,5]
+
+    let echoesVisible = false;
+
+
     
     const circle = `M35,70a35,35 0 1,0 70,0a35,35 0 1,0 -70,0`;
     const echoes = isMobile ? 6 : 10;
@@ -41,9 +41,9 @@
     onMount(async()=>{
         resizeObserver.observe(document.querySelector('#app'));
         document.body.style.background='white';
-        onScrolls = onScrollAssets(elementsCheesy, isMobile);
-        anims = animAssets(echoes);
-        // await tick();
+       
+        await tick();
+        ScrollTrigger.sort(); // use the defaults (typically best)
         // ScrollSmoother.normalizeScroll = true;
     })
 
