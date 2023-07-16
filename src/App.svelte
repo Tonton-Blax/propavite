@@ -15,7 +15,7 @@
     import gsap from 'gsap';
     import ScrollTrigger from 'gsap/ScrollTrigger';
     // import ScrollSmoother from './lib/ScrollSmoother';
-    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+    gsap.registerPlugin(ScrollTrigger);
     // ScrollSmoother.create({
     //     smooth: 1,               // how long (in seconds) it takes to "catch up" to the native scroll position
     //     effects: true,           // looks for data-speed and data-lag attributes on elements
