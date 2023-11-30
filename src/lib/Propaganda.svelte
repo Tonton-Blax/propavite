@@ -61,7 +61,7 @@
                         : gsap[!!from ? 'from' : 'to'](target, rest))
                 
             }
-            ScrollTrigger.normalizeScroll(true) 
+            //ScrollTrigger.normalizeScroll(true) 
         })
     }
 

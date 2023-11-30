@@ -43,6 +43,7 @@
         document.body.style.background='white';
        
         await tick();
+        ScrollTrigger.refresh();
         ScrollTrigger.sort(); // use the defaults (typically best)
         // ScrollSmoother.normalizeScroll = true;
     })
