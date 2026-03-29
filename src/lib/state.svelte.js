@@ -6,7 +6,6 @@ export const propaTitleCtxKey = Symbol("propatitle-context");
 /** @type {PropaSharedState} */
 export const appState = $state({
   intersection: {},
-  isMobile: false,
   typographicScrollProgress: 0,
 });
 
@@ -26,11 +25,6 @@ class PropaTitleContextState {
   constructor(title = "") {
     this.title = title;
   }
-}
-
-/** @param {boolean} value */
-export function setIsMobile(value) {
-  appState.isMobile = value;
 }
 
 /** @param {number} value */

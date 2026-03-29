@@ -49,7 +49,6 @@ export interface PropaTitleContext {
 
 export interface PropaSharedState {
   intersection: Record<string, unknown>
-  isMobile: boolean
   typographicScrollProgress: number
 }
 

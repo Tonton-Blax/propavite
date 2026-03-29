@@ -3,6 +3,8 @@
   // OR MUESTRA NUEVA APPROCHE RESSEREE
 
   import { tick } from "svelte";
+  import { MediaQuery } from "svelte/reactivity";
+  import { innerHeight, innerWidth } from "svelte/reactivity/window";
 
   import Echoes from "./lib/Echoes.svelte";
   import CentricChild from "./lib/CentricChild.svelte";
@@ -13,7 +15,7 @@
   import Proparent from "./lib/Proparent.svelte";
   import { ScrollSmoother, ScrollTrigger, setupGsap } from "./lib/gsap";
   import { createPathInterpolator } from "./lib/path-morph";
-  import { appState, setIsMobile } from "./lib/state.svelte.js";
+  import { appState } from "./lib/state.svelte.js";
   import { onScrollAssets, typographicPaths, animAssets } from "./propassets";
 
   setupGsap();
@@ -28,26 +30,33 @@
   let smoothWrapper;
   /** @type {HTMLDivElement | undefined} */
   let smoothContent;
-  let introContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let introContainer = $state(
+    /** @type {HTMLDivElement | undefined} */ (undefined),
+  );
   let introTimeline = $state(/** @type {any} */ (null));
-  let cheesyContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let cheesyContainer = $state(
+    /** @type {HTMLDivElement | undefined} */ (undefined),
+  );
   let cheesyTimeline = $state(/** @type {any} */ (null));
-  let typographicContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let typographicContainer = $state(
+    /** @type {HTMLDivElement | undefined} */ (undefined),
+  );
   let typographicTimeline = $state(/** @type {any} */ (null));
-  let poeticContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let poeticContainer = $state(
+    /** @type {HTMLDivElement | undefined} */ (undefined),
+  );
   let poeticTimeline = $state(/** @type {any} */ (null));
-  let fishContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let fishContainer = $state(
+    /** @type {HTMLDivElement | undefined} */ (undefined),
+  );
   let fishTimeline = $state(/** @type {any} */ (null));
   /** @type {any} */
   let smoother = null;
-  let viewportWidth = $state(
-    typeof window === "undefined" ? 1440 : window.innerWidth,
-  );
-  let viewportHeight = $state(
-    typeof window === "undefined" ? 900 : window.innerHeight,
-  );
+  const mobileQuery = new MediaQuery(MEDIA_QUERY, false);
 
-  const isMobile = $derived(appState.isMobile);
+  const viewportWidth = $derived(innerWidth.current ?? 1440);
+  const viewportHeight = $derived(innerHeight.current ?? 900);
+  const isMobile = $derived(mobileQuery.current);
   const echoes = $derived(isMobile ? 6 : 10);
   const grid = $derived(isMobile ? [3, 7] : [9, 5]);
   const onScrolls = $derived(onScrollAssets(elementsCheesy, isMobile));
@@ -70,32 +79,8 @@
     });
   });
 
-  function updateViewportState() {
-    viewportWidth = document.documentElement.clientWidth;
-    viewportHeight = document.documentElement.clientHeight;
-    setIsMobile(window.matchMedia(MEDIA_QUERY).matches);
-  }
-
   /** @type {(n: number, min: number, max: number) => number} */
   const clamp = (n, min, max) => (n > max ? max : n < min ? min : n);
-
-  $effect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia(MEDIA_QUERY);
-    const handleViewportChange = () => updateViewportState();
-
-    updateViewportState();
-    mediaQuery.addEventListener("change", handleViewportChange);
-    window.addEventListener("resize", handleViewportChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleViewportChange);
-      window.removeEventListener("resize", handleViewportChange);
-    };
-  });
 
   $effect(() => {
     if (!smoothWrapper || !smoothContent) {
