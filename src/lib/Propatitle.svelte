@@ -1,7 +1,8 @@
 <script>
-  import { setContext } from "svelte";
-
-  import { createPropaTitleContext, propaTitleCtxKey } from "./state.svelte.js";
+  import {
+    createPropaTitleContext,
+    setPropaTitleContext,
+  } from "./state.svelte.js";
 
   let {
     color = "white",
@@ -17,7 +18,7 @@
   let wrapper = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
 
   const ctx = createPropaTitleContext("");
-  setContext(propaTitleCtxKey, ctx);
+  setPropaTitleContext(ctx);
 
   $effect(() => {
     ctx.title = title;

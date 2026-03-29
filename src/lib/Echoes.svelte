@@ -134,8 +134,10 @@
 <div
   {id}
   bind:this={mainElement}
-  class="propaganda-echoes_wrapper"
-  class:has-perspective={!resolvedOptions.isoMetric}
+  class={[
+    "propaganda-echoes_wrapper",
+    { "has-perspective": !resolvedOptions.isoMetric },
+  ]}
   style="
         --propa-echoes-mod-x: {perspectiveOrigin[0] ||
     echoesDistance * Math.sin(angle * (Math.PI / 180))}%;
@@ -160,9 +162,11 @@
       {#each [...line] as letter, c (c + letter)}
         <button
           type="button"
-          class="propaganda-letter"
+          class={[
+            "propaganda-letter",
+            { "face-stroke": resolvedOptions.faceOutline },
+          ]}
           disabled={!onLetterClick}
-          class:face-stroke={resolvedOptions.faceOutline}
           style:color={!resolvedOptions.faceOutline
             ? resolvedOptions.faceColor
             : "current-color"}
@@ -183,7 +187,7 @@
           {#if echoes}
             {#each { length: echoes } as _, i (i)}
               <span
-                class:echoes-stroke={resolvedOptions.outline}
+                class={{ "echoes-stroke": resolvedOptions.outline }}
                 style:font-size={(resolvedOptions.fontSize ?? 10) *
                   spreadValue(i + 1)}
                 style:opacity={1 -

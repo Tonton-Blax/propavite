@@ -15,7 +15,6 @@
   import Proparent from "./lib/Proparent.svelte";
   import { ScrollSmoother, ScrollTrigger, setupGsap } from "./lib/gsap";
   import { createPathInterpolator } from "./lib/path-morph";
-  import { appState } from "./lib/state.svelte.js";
   import { onScrollAssets, typographicPaths, animAssets } from "./propassets";
 
   setupGsap();
@@ -52,6 +51,9 @@
   let fishTimeline = $state(/** @type {any} */ (null));
   /** @type {any} */
   let smoother = null;
+  const appState = $state({
+    typographicScrollProgress: 0,
+  });
   const mobileQuery = new MediaQuery(MEDIA_QUERY, false);
 
   const viewportWidth = $derived(innerWidth.current ?? 1440);
@@ -152,17 +154,27 @@
         }}
         onScroll={onScrolls.intro}
       >
-        {#each { length: grid[0] * grid[1] } as _, i}
+        {#each { length: grid[0] * grid[1] } as _, i (`intro-${isMobile ? "mobile" : "desktop"}-${i}`)}
           <div class="balles">
             <div
-              class:invisible={(!isMobile && i > 21 && i < 27) ||
-                (isMobile && (i == 10 || i == 9 || i == 11))}
-              class="circle-white"
+              class={[
+                "circle-white",
+                {
+                  invisible:
+                    (!isMobile && i > 21 && i < 27) ||
+                    (isMobile && (i == 10 || i == 9 || i == 11)),
+                },
+              ]}
             ></div>
             <div
-              class:invisible={(!isMobile && i > 21 && i < 27) ||
-                (isMobile && (i == 10 || i == 9 || i == 11))}
-              class="circle-black"
+              class={[
+                "circle-black",
+                {
+                  invisible:
+                    (!isMobile && i > 21 && i < 27) ||
+                    (isMobile && (i == 10 || i == 9 || i == 11)),
+                },
+              ]}
             ></div>
           </div>
         {/each}
@@ -190,11 +202,15 @@
         height={isMobile ? "102%" : "100%"}
         id={"grid-minimalist"}
       >
-        {#each { length: grid[0] * grid[1] } as _, i}
+        {#each { length: grid[0] * grid[1] } as _, i (`minimalist-${isMobile ? "mobile" : "desktop"}-${i}`)}
           <div
-            class="lignes"
-            class:invisible={(!isMobile && i > 20 && i < 24) ||
-              (isMobile && i == 10)}
+            class={[
+              "lignes",
+              {
+                invisible:
+                  (!isMobile && i > 20 && i < 24) || (isMobile && i == 10),
+              },
+            ]}
           >
             <div class="ligne">
               <span
@@ -235,7 +251,7 @@
         height={"100%"}
         onScroll={onScrolls.cheesy}
       >
-        {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
+        {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i (`reverbere-${isMobile ? "mobile" : "desktop"}-${i}`)}
           <div
             class="reverbere"
             style="width:{(isMobile ? 340 : 12) / elementsCheesy + i * 3}vw"
@@ -257,7 +273,7 @@
         zIndex={1}
         height={"100%"}
       >
-        {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
+        {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i (`palmier-${isMobile ? "mobile" : "desktop"}-${i}`)}
           <div
             class="palmier"
             style="width:{(isMobile ? 380 : 80) / elementsCheesy + i * 1.5}vw"
@@ -321,7 +337,7 @@
     >
       <div class="title-wrapper">
         <div id="title-typographic">
-          {#each "typographic" as typo, i}
+          {#each "typographic" as typo, i (`typographic-title-${typo}-${i}`)}
             <span
               style="opacity:{Math.round(
                 6 * ((appState.typographicScrollProgress * 1.4) / (i + 1)),
@@ -343,7 +359,7 @@
         id={"grid-typographic"}
         onScroll={onScrolls.typographic}
       >
-        {#each typographicPaths as path, i}
+        {#each typographicPaths as path, i (`typographic-path-${i}`)}
           {#if Array.isArray(path)}
             <svg
               id="svg-{i}"
@@ -410,7 +426,7 @@
         id={"grid-poetic"}
         onScroll={onScrolls.poetic}
       >
-        {#each "poetic" as letter, i}
+        {#each "poetic" as letter, i (`poetic-${letter}-${i}`)}
           <div class="poetic">
             <img src="/propaganda/letters/{letter}.png" alt={letter} />
           </div>
@@ -427,7 +443,7 @@
         cx={50}
         cy={50}
       >
-        {#each { length: 3 } as _, i}
+        {#each { length: 3 } as _, i (`feather-${i}`)}
           <CentricChild
             angle={120 * i}
             animation={true}
@@ -482,7 +498,7 @@
             animations={anims.retrochic}
             height={"100vh"}
           >
-            {#each { length: isMobile ? 24 : 30 } as _, i}
+            {#each { length: isMobile ? 24 : 30 } as _, i (`retrochic-${isMobile ? "mobile" : "desktop"}-${i}`)}
               <div
                 class="retrochic-element"
                 style="opacity:{0.25 + Math.random() * 0.5}"

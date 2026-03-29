@@ -1,13 +1,6 @@
-/** @import { PropaCentricContext, PropaSharedState, PropaTitleContext } from "../app" */
+import { createContext } from "svelte";
 
-export const centricCtxKey = Symbol("centric-context");
-export const propaTitleCtxKey = Symbol("propatitle-context");
-
-/** @type {PropaSharedState} */
-export const appState = $state({
-  intersection: {},
-  typographicScrollProgress: 0,
-});
+/** @import { PropaCentricContext, PropaTitleContext } from "../app" */
 
 class CentricContextState {
   path = $state("");
@@ -27,11 +20,6 @@ class PropaTitleContextState {
   }
 }
 
-/** @param {number} value */
-export function setTypographicScrollProgress(value) {
-  appState.typographicScrollProgress = value;
-}
-
 /** @returns {PropaCentricContext} */
 export function createCentricContext() {
   return new CentricContextState();
@@ -42,3 +30,6 @@ export function createCentricContext() {
 export function createPropaTitleContext(title = "") {
   return new PropaTitleContextState(title);
 }
+
+export const [getCentricContext, setCentricContext] = createContext();
+export const [getPropaTitleContext, setPropaTitleContext] = createContext();

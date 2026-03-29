@@ -97,9 +97,8 @@
 
 <div
   {id}
-  class="propaganda-wrapper"
+  class={["propaganda-wrapper", { "proparent-gradient": !!gradient }]}
   bind:this={container}
-  class:proparent-gradient={!!gradient}
   style:justify-content={hAlign}
   style:align-items="{vAlign};"
   style:overflow

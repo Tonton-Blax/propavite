@@ -1,8 +1,8 @@
 <script>
-  import { onMount, setContext } from "svelte";
+  import { onMount } from "svelte";
 
   import { gsap } from "./gsap";
-  import { centricCtxKey, createCentricContext } from "./state.svelte.js";
+  import { createCentricContext, setCentricContext } from "./state.svelte.js";
   import { makeId, processStyles, setAnimations } from "./utils";
 
   let {
@@ -59,7 +59,7 @@
             a ${circleRadius},${circleRadius + (distort[1] || 0)} 0 1,1 -${circleRadius * 2},0`;
   });
 
-  setContext(centricCtxKey, centricContext);
+  setCentricContext(centricContext);
 
   $effect(() => {
     processStyles(styles, mainElement);

@@ -110,8 +110,7 @@
 
 <div
   {id}
-  class="mainElement {className}"
-  class:border
+  class={["mainElement", className, { border }]}
   bind:this={mainElement}
   style="
 		font-family:{fontFamily};

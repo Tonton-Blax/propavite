@@ -18,13 +18,11 @@
   export const interpolateGrid = (gridXorY, options = {}) => {
     let { dimension = 100, diffSizes = false, eased, from } = options;
 
-    const easedFn =
-      !eased
-        ? (/** @type {number} */ val) => val
-        : typeof eased === "function"
-          ? eased
-          : easing[eased] || easing.backInOut;
-
+    const easedFn = !eased
+      ? (/** @type {number} */ val) => val
+      : typeof eased === "function"
+        ? eased
+        : easing[eased] || easing.backInOut;
     const array = Array(gridXorY)
       .fill(0)
       .map((_, i) => {
@@ -67,12 +65,8 @@
     gap = "unset",
     fit = /** @type {false | "height" | "width"} */ (false),
     gridUnits = "fr",
-    colSize = /** @type {SizeInput} */ (
-      1
-    ),
-    rowSize = /** @type {SizeInput} */ (
-      1
-    ),
+    colSize = /** @type {SizeInput} */ (1),
+    rowSize = /** @type {SizeInput} */ (1),
     fontSize = 6,
     grid = /** @type {[number, number]} */ ([7, 3]),
     cellOverflow = "visible",
@@ -94,7 +88,9 @@
     children = undefined,
   } = $props();
 
-  let mainElement = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let mainElement = $state(
+    /** @type {HTMLDivElement | undefined} */ (undefined),
+  );
 
   const tlAnimations = gsap.timeline();
   const processedDimensions = $derived.by(() => {
@@ -234,7 +230,11 @@
     const colRowSplitted = colRowString.split(" ");
     if (Array.isArray(colRowSize)) {
       return colRowSize.map((c) => (Number(c) ? c + gridUnits : c)).join(" ");
-    } else if (!fit && typeof colRowSize === "number" && !Number.isNaN(colRowSize)) {
+    } else if (
+      !fit &&
+      typeof colRowSize === "number" &&
+      !Number.isNaN(colRowSize)
+    ) {
       return Array(colRowSplitted.length)
         .fill(`${colRowSize + gridUnits}`)
         .join(" ");
@@ -267,9 +267,8 @@
 -->
 
 <div
-  class="pro-grid {className}"
+  class={["pro-grid", className, { "default-dimensions": !width || !height }]}
   {id}
-  class:default-dimensions={!width || !height}
   style="
                 --propa-grid_height : {Number(height) ? height + '%' : height};
                 --propa-grid_width : {Number(width) ? width + '%' : width};

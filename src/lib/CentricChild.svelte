@@ -6,10 +6,10 @@
 </script>
 
 <script>
-  import { getContext, onMount } from "svelte";
+  import { onMount } from "svelte";
 
   import { gsap, setupGsap } from "./gsap";
-  import { centricCtxKey } from "./state.svelte.js";
+  import { getCentricContext } from "./state.svelte.js";
 
   let {
     angle = 0,
@@ -29,7 +29,7 @@
   } = $props();
 
   const id = localId().next().value;
-  const centricContext = getContext(centricCtxKey);
+  const centricContext = getCentricContext();
   const childRadius = $derived(centricContext?.radius ?? 0);
   const childUnits = $derived(centricContext?.units ?? "px");
 
