@@ -1,222 +1,254 @@
-<script context="module">
-    import { interpolate } from './utils.js'
-    import * as easing from 'svelte/easing';
+<script module>
+  import { interpolate, totalArray } from "./utils.js";
+  import * as easing from "svelte/easing";
 
-    export const interpolateGrid = (gridXorY, options = {}) => {
-        let { dimension, diffSizes, eased, from } = options;
+  /** @typedef {keyof typeof easing | ((value: number) => number)} GridEasing */
+  /**
+   * @typedef {object} GridInterpolationOptions
+   * @property {number} [dimension]
+   * @property {boolean} [diffSizes]
+   * @property {GridEasing} [eased]
+   * @property {"center" | "end" | string} [from]
+   */
 
-            eased = !eased 
-            ? (val) => val 
-            : easing[eased] || easing.backInOut
+  /**
+   * @param {number} gridXorY
+   * @param {GridInterpolationOptions} [options={}]
+   */
+  export const interpolateGrid = (gridXorY, options = {}) => {
+    let { dimension = 100, diffSizes = false, eased, from } = options;
 
-        const array = Array( gridXorY ).fill()
-            .map((_,i) =>  {
-                if (!diffSizes)
-                  return (dimension || 100)/gridXorY
-                else {
-                    const x = 
-                        (from === 'center') && i >= Math.floor(gridXorY/2) 
-                        ? gridXorY - 1 - i 
-                        : i;
-                    return (eased( gridXorY +  x ))
-                }
-            });
+    const easedFn =
+      !eased
+        ? (/** @type {number} */ val) => val
+        : typeof eased === "function"
+          ? eased
+          : easing[eased] || easing.backInOut;
 
-        const interpolation = (a) => interpolate(a, 0, totalArray(array), 0, dimension);
-        let retVal = array.map( a => interpolation(a) );
-        if (from === 'end')
-                retVal = retVal.slice().reverse()
-        return retVal; 
-    }
+    const array = Array(gridXorY)
+      .fill(0)
+      .map((_, i) => {
+        if (!diffSizes) return (dimension || 100) / gridXorY;
+        else {
+          const x =
+            from === "center" && i >= Math.floor(gridXorY / 2)
+              ? gridXorY - 1 - i
+              : i;
+          return easedFn(gridXorY + x);
+        }
+      });
+
+    const interpolation = (/** @type {number} */ a) =>
+      interpolate(a, 0, totalArray(array), 0, dimension);
+    let retVal = array.map((a) => interpolation(a));
+    if (from === "end") retVal = retVal.slice().reverse();
+    return retVal;
+  };
 </script>
 
-
 <script>
-    import { onMount , tick } from 'svelte'
-    import { processStyles, setAnimations, makeId, totalArray } from './utils';
-    import gsap from 'gsap';
+  import { onMount } from "svelte";
 
+  import { gsap } from "./gsap";
+  import { makeId, processStyles, setAnimations } from "./utils";
 
-/** @type {number | string} */
-    export let zIndex=1;
+  /**
+   * @typedef {string | number | Array<number | string> | Record<number, number | string>} SizeInput
+   * @typedef {(element: Element, line: number, column: number) => void} GridCallback
+   * @typedef {{ step?: number, odd?: boolean } & Record<string, unknown>} GridStyles
+   */
 
-/** @type {number | string} - (defaults to 'auto') */
-    export let aspectRatio = 'auto';
+  let {
+    zIndex = 1,
+    aspectRatio = "auto",
+    width = "100%",
+    height = "100%",
+    scale = 1,
+    gap = "unset",
+    fit = /** @type {false | "height" | "width"} */ (false),
+    gridUnits = "fr",
+    colSize = /** @type {SizeInput} */ (
+      1
+    ),
+    rowSize = /** @type {SizeInput} */ (
+      1
+    ),
+    fontSize = 6,
+    grid = /** @type {[number, number]} */ ([7, 3]),
+    cellOverflow = "visible",
+    styles = /** @type {string | Record<string, unknown>} */ (""),
+    oddCols = /** @type {Record<string, unknown> | null} */ (null),
+    oddRows = /** @type {Record<string, unknown> | null} */ (null),
+    id = makeId(),
+    class: className = "",
+    onScroll = /** @type {import('../app').PropaAnimationStep | import('../app').PropaAnimationStep[] | null} */ (
+      null
+    ),
+    createClasses = false,
+    animations = /** @type {import('../app').PropaAnimationStep | import('../app').PropaAnimationStep[] | null} */ (
+      null
+    ),
+    container = null,
+    timeline = null,
+    background = "none",
+    children = undefined,
+  } = $props();
 
-/** @type {number | string} - (defaults to '%' unit)
-*   @example ```'auto'``` , ```100```, ```'90vmin'``` - unitless Numbers will default to 'fr' unit */
-    export let width = '100%';
+  let mainElement = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
 
-/** @type {number | string} - (defaults to '%' unit)
-*   @example ```'auto'``` , ```100```, ```'90vmin'``` - unitless Numbers will default to 'fr' unit */
-    export let height = '100%';
+  const tlAnimations = gsap.timeline();
+  const processedDimensions = $derived.by(() => {
+    if (fit === "height" || fit === "width") {
+      if (grid[0] > grid[1]) {
+        return {
+          col: Array(grid[0])
+            .fill(`${100 / grid[0]}vmax`)
+            .join(" "),
+          row:
+            fit === "height"
+              ? Array(grid[1])
+                  .fill(`${100 / grid[1]}vmin`)
+                  .join(" ")
+              : Array(grid[1])
+                  .fill(`${100 / grid[0]}vmax`)
+                  .join(" "),
+        };
+      }
 
-/** Sets grid global scale
- * @type {number} - between 0 and 1 */
-export let scale = 1;
+      return {
+        row: Array(grid[1])
+          .fill(`${100 / grid[1]}vmin`)
+          .join(" "),
+        col:
+          fit === "height"
+            ? Array(grid[0])
+                .fill(`${100 / grid[1]}vmin`)
+                .join(" ")
+            : Array(grid[0])
+                .fill(`${100 / grid[0]}vmax`)
+                .join(" "),
+      };
+    }
 
-/** css string OR number OR array of two numbers (defaults to %)  
- * @type {string | number | array[number,number]}
- * @example ```"3px"``` or ```"3px 10px"``` to set both row AND column gaps
- * @example ```[3,10]``` (will result in '3% 10%')
-*/
-    export let gap = 'unset';
+    return {
+      col: processRowColsDimensions(
+        colSize,
+        Array(grid[0]).fill("1fr").join(" "),
+      ),
+      row: processRowColsDimensions(
+        rowSize,
+        Array(grid[1]).fill("1fr").join(" "),
+      ),
+    };
+  });
 
-/** Sets initial columns and row template CSS so that grid fit viewport
- * Accepts a string, (either "height" or "width"), or a boolean to disable
-* @type {false | string<'height'|'width'>} */
-    export let fit = false;
+  $effect(() => {
+    processStyles(styles, mainElement);
+  });
 
-/** Default grid CSS units, defaults to 'fr'
-* @type {string} */
-    export let gridUnits = 'fr';
+  $effect(() => {
+    if (!mainElement) {
+      return;
+    }
 
-/** Sets the grid column(s) size(s)
- * @type {number | number[] | string[] |  [number] : number|string } }
- * @example [1, '2fr', '30px'] - unitless Numbers will default to 'fr' unit
- * @example "2fr 10px" 
- * @example {3 : '10px', 5 : '10vw' } - will change columm 3 and 5 (other will be '1fr')
-*/
-    export let colSize = 1;
+    setAnimations({ timeline, animations: onScroll, mainElement });
+  });
 
-/** same as @property {colSize} but for rows, check ```colSize``` for details
- * @type {number | number[] | string[] | string | { [number] : number|string }}
-*/
-    export let rowSize = 1;
-    export let fontSize = 6;
+  $effect(() => {
+    if (!mainElement) {
+      return;
+    }
 
-/** Sets number of [ columns, rows ] for the grid
- * @type {array[number,number]}
-*/
-    export let grid = [7, 3];
+    setAnimations({ timeline: tlAnimations, animations, mainElement });
+  });
 
-/** css overflow property shorthand for cells (grid items) */
-    export let cellOverflow = 'visible';
+  $effect(() => {
+    if (!mainElement) {
+      return;
+    }
 
-/** Grid styling object. Allows either camelCase or 'kebak-case'
-* @example  {marginLeft : '10px', 'margin-top' : '10vw' }
-*/
-    export let styles='';
+    if (createClasses) {
+      loopGrid((el, line, column) =>
+        el.classList.add(`line-${line}`, `column-${column}`),
+      );
+    }
 
-/** odd Columns styling object. Allows either camelCase or 'kebak-case'.
- * Even (instead of odd) columns can be targeted by setting {odd : false }
- * Alternation may be ajusted with step property
- * @property {boolean} odd - targets odd
- * @property {number} step - ajusts the odd/even ratio
-*  @example {marginLeft : '10px', 'margin-top' : '10vw', odd : false, step }
-*/
-    export let oddCols = null;
+    if (oddRows) {
+      processOddEvenRows(oddRows, true);
+    }
 
-/** odd/even rows styling object. Allows either camelCase or 'kebak-case'.
- * Even (instead of odd) rows can be targeted by setting {odd : false }
- * Alternation ratio between odd/even may be ajusted with step property
- * @property {boolean} odd - targets odd
- * @property {number} step - ajusts the odd/even ratio
-*  @example {marginLeft : '10px', 'margin-top' : '10vw', odd : false, step }
-*/
-    export let oddRows = null;
-    export let id = makeId();
-    export let className='';
+    if (oddCols) {
+      processOddEvenRows(oddCols, false);
+    }
+  });
 
-/** Shorthand configuration Object for GSAP  + ScrollTrigger plugin
- *  animation properties and scrollTrigger properties are merged at the root level of the object
- *  @example { trigger : '.container', yPercent : 10, from : true }
- *  @property {HTMLElement | string} ```trigger``` - will default to the grid parentNode
- *  @property {HTMLElement | string} ```target``` will default to the grid children
- *  @property {boolean | object} ```from``` null by default, otherwise it will trigger a gsap.from() animation instead of a gsap.to() which is default behavior
-*   @example { y : 0, opacity : 0.1, from : true }
- *  @property {boolean | object} ```to``` null by default. Configuration object may be passed to both ```from``` and ```to``` properties to trigger a {@link https://greensock.com/docs/v3/GSAP/gsap.fromTo()|gsap.fromTo()} animation 
- *  @example { from : { y : 0, opacity : 0.1 } , to : { opacity : 1 } }
- *  @property {object} ```create``` Configuration object may be passed to ```create``` to trigger a {@link https://greensock.com/docs/v3/Plugins/ScrollTrigger/static.create()|gsap.create()} custom animation
-*/
-    export let onScroll = null;
-/** Sets two classes for each cell item (direct grid children) named "line-n" "column-n"
- * @type {boolean} - default is false
-*/
-    export let createClasses = false;
-    export let animations = null;
-    export let container = null;
-    export let timeline = null;
-    export let background = 'none';
+  onMount(() => {
+    return () => {
+      tlAnimations.kill();
+      timeline?.kill();
 
-    let mainElement;
-    let _colSize = Array(grid[0]).fill('1fr').join(' ');
-    let _rowSize = Array(grid[1]).fill('1fr').join(' ');
-    
-    $: processStyles(styles, mainElement);
-    $: _colSize = processRowColsDimensions(colSize, _colSize);
-    $: _rowSize = processRowColsDimensions(rowSize, _rowSize);
-    $:setAnimations({ timeline, animations : onScroll, mainElement })
-    $:setAnimations({ timeline : tlAnimations, animations, mainElement })
+      if (mainElement) {
+        gsap.set(mainElement, { clearProps: true });
+      }
+    };
+  });
 
-    
-    const tlAnimations = gsap.timeline();
-    
-    onMount(async()=> {
-        await tick();
-        
-        if (createClasses) {
-            await tick(); 
-            loopGrid( (el, l, c)=> el.classList.add(`line-${l}`,`column-${c}`) )
-        }
+  /**
+   * @param {GridCallback} cb
+   * @param {[number, number]} [g=grid]
+   * @param {HTMLCollection | Element[]} [els=mainElement?.children]
+   */
+  const loopGrid = (cb, g = grid, els = mainElement?.children) => {
+    if (!els) {
+      return;
+    }
 
-        oddRows && processOddEvenRows(oddRows, true);
-        oddCols && processOddEvenRows(oddCols, false);
+    const children = [...els];
+    let x = 0;
+    for (let l = 0; l < g[1]; l++) {
+      for (let c = 0; c < g[0]; c++) {
+        if (!children[x]) break;
+        cb(children[x++], l, c);
+      }
+    }
+  };
 
-        if (fit === 'height' || fit == 'width') {
-            mainElement.style[fit] = '100%';
-            if (grid[0] > grid[1]) {
-                _colSize = Array(grid[0]).fill(`${100 / grid[0]}vmax`).join(' ');
-                _rowSize = fit === 'height' 
-                    ? Array(grid[1]).fill(`${100 / grid[1]}vmin`).join(' ')
-                    : Array(grid[1]).fill(`${100 / grid[0]}vmax`).join(' ')
-            } else {
-                _rowSize = Array(grid[1]).fill(`${100 / grid[1]}vmin`).join(' ');
-                _colSize = fit === 'height' 
-                        ? Array(grid[0]).fill(`${100 / grid[1]}vmin`).join(' ')
-                        : Array(grid[0]).fill(`${100 / grid[0]}vmax`).join(' ');
-            }
-        }
-
+  /**
+   * @param {GridStyles} gridStyles
+   * @param {boolean} isLine
+   */
+  const processOddEvenRows = (gridStyles, isLine) => {
+    const { step, odd, ...style } = gridStyles;
+    loopGrid((el, l, c) => {
+      if ((isLine ? l : c) % (step || 2) === (odd ? 0 : 1)) {
+        processStyles(style, el);
+      }
     });
+  };
 
-    const loopGrid = (cb, g = grid, els = mainElement.children) => {
-        const children = [...els];
-        let x = 0;
-        for (let l=0; l < g[1]; l++) {
-            for (let c=0; c < g[0]; c++) {
-                if (!children[x])
-                    break
-                cb(children[x++], l,c);
-            }
-        }
-    }
-    
-    const processOddEvenRows = (gridStyles, isLine) => {
-        const { step, odd, ...style } = gridStyles;
-        loopGrid( (el, l, c)=>{
-            if ( ( (isLine ? l : c) % (step || 2) ) === (odd ? 0 : 1)) {
-                processStyles(style, el)
-            }
-        })
-    }
-    
-    const processRowColsDimensions = (colRowSize, colRowString) => {
-        const colRowSplitted = colRowString.split(' ');
-        if (Array.isArray(colRowSize)) {
-            return colRowSize.map(c => Number(c) ? c + gridUnits : c ).join(' ')
-        } else if (!fit && !isNaN(colRowSize)) {
-            return Array(colRowSplitted.length).fill(`${colRowSize + gridUnits}`).join(' ')
-        } else if (colRowSize.constructor.name === "Object") {
-            for (const k of Object.keys(colRowSize))
-                colRowSplitted[k] = Number(colRowSize[k]) ? colRowSize[k] + 'fr ' : colRowSize[k];
-            return colRowSplitted.join(' ');
-        } else if (typeof colRowSize === 'string')
-            return colRowSize;
-        else return colRowString;
-    }
-
-    </script>
+  /**
+   * @param {SizeInput} colRowSize
+   * @param {string} colRowString
+   */
+  const processRowColsDimensions = (colRowSize, colRowString) => {
+    const colRowSplitted = colRowString.split(" ");
+    if (Array.isArray(colRowSize)) {
+      return colRowSize.map((c) => (Number(c) ? c + gridUnits : c)).join(" ");
+    } else if (!fit && typeof colRowSize === "number" && !Number.isNaN(colRowSize)) {
+      return Array(colRowSplitted.length)
+        .fill(`${colRowSize + gridUnits}`)
+        .join(" ");
+    } else if (typeof colRowSize === "object" && colRowSize !== null) {
+      for (const k of Object.keys(colRowSize)) {
+        const key = Number(k);
+        const value = colRowSize[key];
+        colRowSplitted[key] = Number(value) ? value + "fr " : String(value);
+      }
+      return colRowSplitted.join(" ");
+    } else if (typeof colRowSize === "string") return colRowSize;
+    else return colRowString;
+  };
+</script>
 
 <!--
 
@@ -234,68 +266,67 @@ export let scale = 1;
 
 -->
 
-        <div 
-            class="pro-grid {className}" id="{id}"
-            class:default-dimensions={!width || !height}
-            style="
-                --propa-grid_height : { Number(height) ? height + '%' : height };
-                --propa-grid_width : { Number(width) ? width + '%' : width };
-                --propa-grid-gap : { gap };
-                --propa-grid_rows : { _rowSize };
-                --propa-grid_columns : { _colSize };
-                --propa-grid_fontsize : { Number(fontSize) ? fontSize + 'rem' : fontSize };
-                --propa-cell_overflow : { cellOverflow };
-                --propa-grid_bg : { background };
-                aspect-ratio : { aspectRatio };
-                z-index:{ zIndex };
-                transform:matrix({ scale },0.00,0.00,{ scale },0,0);
+<div
+  class="pro-grid {className}"
+  {id}
+  class:default-dimensions={!width || !height}
+  style="
+                --propa-grid_height : {Number(height) ? height + '%' : height};
+                --propa-grid_width : {Number(width) ? width + '%' : width};
+                --propa-grid-gap : {gap};
+                --propa-grid_rows : {processedDimensions.row};
+                --propa-grid_columns : {processedDimensions.col};
+                --propa-grid_fontsize : {Number(fontSize)
+    ? fontSize + 'rem'
+    : fontSize};
+                --propa-cell_overflow : {cellOverflow};
+                --propa-grid_bg : {background};
+                aspect-ratio : {aspectRatio};
+                z-index:{zIndex};
+                transform:matrix({scale},0.00,0.00,{scale},0,0);
             "
-            bind:this={mainElement}
-        >   
-            <slot {mainElement}></slot>
-        </div>
-       
+  bind:this={mainElement}
+>
+  {@render children?.({ mainElement })}
+</div>
 
+<style>
+  :global(:root) {
+    --propa-grid_border: "none";
+  }
+  .pro-grid {
+    display: grid;
+    background: var(--propa-grid_bg);
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    padding: 0;
+    position: absolute;
+    z-index: 1;
+    transform: translateZ(0);
+    height: var(--propa-grid_height);
+    width: var(--propa-grid_width);
+    grid-gap: var(--propa-grid-gap);
+    grid-template-rows: var(--propa-grid_rows);
+    grid-template-columns: var(--propa-grid_columns);
+  }
 
-    <style>
-
-    :global(:root) {
-        --propa-grid_border:"none";
-    }
-    .pro-grid {
-        display: grid;
-        background : var(--propa-grid_bg);
-        justify-content: center;
-        align-content: center;
-        align-items: center;
-        padding : 0;
-        position: absolute;
-        z-index: 1;
-        transform : translateZ(0);
-        height:var(--propa-grid_height); 
-        width: var(--propa-grid_width); 
-        grid-gap: var(--propa-grid-gap); 
-        grid-template-rows: var(--propa-grid_rows); 
-        grid-template-columns: var(--propa-grid_columns); 
-    }
-
-    .default-dimensions {
-        width: 100%;
-        height: 100%;    
-    }
-    .pro-grid > :global(*) {
-      /*position: absolute;*/
-      box-sizing: border-box;
-      border: var(--propa-grid_border);
-      display: flex;
-      aspect-ratio: 1;
-      width:var(--propa-cell-width);
-      justify-content: center;
-      min-height: fit-content;
-      align-items: center;
-      font-size: var(--propa-grid_fontsize);
-      align-content: unset;
-      overflow: var(--propa-cell_overflow);
-    }
-   
-    </style>
+  .default-dimensions {
+    width: 100%;
+    height: 100%;
+  }
+  .pro-grid > :global(*) {
+    /*position: absolute;*/
+    box-sizing: border-box;
+    border: var(--propa-grid_border);
+    display: flex;
+    aspect-ratio: 1;
+    width: var(--propa-cell-width);
+    justify-content: center;
+    min-height: fit-content;
+    align-items: center;
+    font-size: var(--propa-grid_fontsize);
+    align-content: unset;
+    overflow: var(--propa-cell_overflow);
+  }
+</style>

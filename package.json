@@ -5,16 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "check": "svelte-check --tsconfig ./jsconfig.json",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.4.2",
-    "svelte": "^4.0.5",
-    "vite": "^4.4.3"
+    "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "svelte": "^5.55.0",
+    "svelte-check": "^4.4.5",
+    "vite": "^8.0.3"
   },
   "dependencies": {
-    "gsap": "^3.12.2",
-    "polymorph-js": "^1.0.2"
+    "gsap": "^3.14.2"
   }
 }

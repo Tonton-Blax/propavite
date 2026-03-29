@@ -1,89 +1,119 @@
-<script context="module">
-    let init=false;
-    let index = 0;
-    function* localId() {
-        while (true)
-            yield index++;
-    }
+<script module>
+  let index = 0;
+  function* localId() {
+    while (true) yield index++;
+  }
 </script>
+
 <script>
-    import { centricCtxKey } from './stores'
-    import { getContext, onMount, tick } from 'svelte';
-    import gsap from 'gsap'
-    import MotionPathPlugin from 'gsap/MotionPathPlugin';
-    export let angle = 0;
-    export let orient = true;
-    export let offsetX = 0;
-    export let transformOrigin = null;
-    export let duration = 0;
-    export let pathAlign = 0.5; 
-    export let endAngle = null;
-    export let loop=false;
-    export let fontSize = 10;
-    export let animation=true;
-    export let ease = "power1.inOut"
-    let mounted = false;
-    $: if (mounted) angle, duration, animation, gsapAlign(animation)
-    
-    let id = localId().next().value;
-    let childEl;
-    export let width = 0, height = 0;
-    const { path, pathId, radius, units } = getContext(centricCtxKey);
+  import { getContext, onMount } from "svelte";
 
-    onMount(async()=>{
-        if (!init) {
-            await tick();
-            gsap.registerPlugin(MotionPathPlugin);
-            init=true;
-        }
-        mounted = true;
-        animation && gsapAlign(animation)
-    })
+  import { gsap, setupGsap } from "./gsap";
+  import { centricCtxKey } from "./state.svelte.js";
 
-    const gsapAlign = async (toOrSet) => {
-        const { width, height } = document.querySelector(`#${pathId}`).getBoundingClientRect();
-        const start = (angle/360)+0.00001 // hacky path to avoid rounded angle values merging like 0/180 ;
-        const end = endAngle || ( start < 0 ? -0.75 +  start : 1 + start )
-        gsap[toOrSet ? 'to' : 'set'](`#centric-child-${id}`, {
-            motionPath: {
-                path : `#${pathId}`,
-                align: `#${pathId}`,
-                alignOrigin : [0.5, pathAlign],
-                offsetX : -(width/2) + offsetX,
-                autoRotate: orient,
-                start,
-                end,
-                ...(transformOrigin || {}),
-            },
-            duration,
-            repeat : loop && typeof loop === 'boolean' ? 
-                -1  
-                : isFinite(loop) ? 
-                loop 
-                : 0,
-            ease
-        });
+  let {
+    angle = 0,
+    orient = true,
+    offsetX = 0,
+    transformOrigin = null,
+    duration = 0,
+    pathAlign = 0.5,
+    endAngle = null,
+    loop = false,
+    fontSize = 10,
+    animation = true,
+    ease = "power1.inOut",
+    width = 0,
+    height = 0,
+    children = undefined,
+  } = $props();
+
+  const id = localId().next().value;
+  const centricContext = getContext(centricCtxKey);
+  const childRadius = $derived(centricContext?.radius ?? 0);
+  const childUnits = $derived(centricContext?.units ?? "px");
+
+  /** @type {HTMLDivElement | undefined} */
+  let childEl;
+  let pathWidth = $state(0);
+
+  setupGsap();
+
+  function refreshPathMetrics() {
+    const bounds = centricContext?.pathElement?.getBBox();
+
+    if (bounds) {
+      pathWidth = bounds.width;
     }
+  }
+
+  $effect(() => {
+    centricContext?.path;
+    centricContext?.pathElement;
+    refreshPathMetrics();
+  });
+
+  $effect(() => {
+    if (!childEl || !centricContext?.pathId) {
+      return;
+    }
+
+    refreshPathMetrics();
+    const start = angle / 360 + 0.00001;
+    const end = endAngle ?? (start < 0 ? start - 0.75 : 1 + start);
+    const motionPath = {
+      path: `#${centricContext.pathId}`,
+      align: `#${centricContext.pathId}`,
+      alignOrigin: [0.5, pathAlign],
+      offsetX: -(pathWidth / 2) + offsetX,
+      autoRotate: orient,
+      start,
+      end,
+      ...(transformOrigin || {}),
+    };
+
+    if (animation) {
+      gsap.to(childEl, {
+        motionPath,
+        duration,
+        repeat: loop === true ? -1 : typeof loop === "number" ? loop : 0,
+        ease,
+      });
+    } else {
+      gsap.set(childEl, { motionPath });
+    }
+
+    return () => {
+      if (childEl) {
+        gsap.killTweensOf(childEl);
+      }
+    };
+  });
+
+  onMount(() => {
+    refreshPathMetrics();
+  });
 </script>
 
-<div id="centric-child-{id}" bind:this={childEl} 
-    style="
-        --centric-child_width:{width || (radius)}{units};
-        --centric-child_height:{height || (radius)}{units};
-        --centric-child_font-size:{fontSize || radius}{units}
+<div
+  id="centric-child-{id}"
+  bind:this={childEl}
+  style="
+      --centric-child_width:{width || childRadius}{childUnits};
+      --centric-child_height:{height || childRadius}{childUnits};
+      --centric-child_font-size:{fontSize || childRadius}{childUnits}
     "
 >
-    <slot></slot>
+  {@render children?.()}
 </div>
-    
 
 <style>
- div {
-    position:absolute;
- }
- div > :global(*) {
-     width: var(--centric-child_width);
-     height: var(--centric-child_height);
-     font-size: var(--centric-child_font-size);
- }
+  div {
+    position: absolute;
+  }
+  div > :global(*) {
+    width: var(--centric-child_width);
+    height: var(--centric-child_height);
+    font-size: var(--centric-child_font-size);
+  }
 </style>

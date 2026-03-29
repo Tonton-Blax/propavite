@@ -2,454 +2,519 @@
   // ORDRE : intro - minimalist - cheesy - typo - poetic - aquatic OR chic
   // OR MUESTRA NUEVA APPROCHE RESSEREE
 
+  import { tick } from "svelte";
+
+  import Echoes from "./lib/Echoes.svelte";
+  import CentricChild from "./lib/CentricChild.svelte";
+  import PropaCentric from "./lib/PropaCentric.svelte";
   import PropaGrid from "./lib/PropaGrid.svelte";
   import PropaLayer from "./lib/PropaLayer.svelte";
-  import Proparent from "./lib/Proparent.svelte";
   import PropaMask from "./lib/PropaMask.svelte";
-  import PropaCentric from "./lib/PropaCentric.svelte";
-  import CentricChild from "./lib/CentricChild.svelte";
-  import { interpolate } from "polymorph-js";
-  import { onMount, tick } from "svelte";
-  import Echoes from "./lib/Echoes.svelte";
-  import {
-    onScrollAssets,
-    typographicPaths,
-    animAssets,
-    typographicScrollProgress,
-  } from "./propassets";
-  import gsap from "gsap";
-  import ScrollTrigger from "gsap/ScrollTrigger";
-  // import ScrollSmoother from './lib/ScrollSmoother';
-  gsap.registerPlugin(ScrollTrigger);
-  // ScrollSmoother.create({
-  //     smooth: 1,               // how long (in seconds) it takes to "catch up" to the native scroll position
-  //     effects: true,           // looks for data-speed and data-lag attributes on elements
-  //     smoothTouch: 0.1,        // much shorter smoothing time on touch devices (default is NO smoothing on touch devices)
-  // });
-  ScrollTrigger.clearScrollMemory();
-  ScrollTrigger.config({ limitCallbacks: true, ignoreMobileResize: true });
+  import Proparent from "./lib/Proparent.svelte";
+  import { ScrollSmoother, ScrollTrigger, setupGsap } from "./lib/gsap";
+  import { createPathInterpolator } from "./lib/path-morph";
+  import { appState, setIsMobile } from "./lib/state.svelte.js";
+  import { onScrollAssets, typographicPaths, animAssets } from "./propassets";
+
+  setupGsap();
+
+  const MEDIA_QUERY = "(orientation : portrait), (max-width : 675px)";
+  const circle = "M35,70a35,35 0 1,0 70,0a35,35 0 1,0 -70,0";
   const elementsCheesy = 8;
+  const waves = ["wave-01.png", "wave-02.png", "wave-03.png"];
 
-  let isMobile = window.matchMedia(
-    "(orientation : portrait), (max-width : 675px)"
-  ).matches;
-  $: onScrolls = onScrollAssets(elementsCheesy, isMobile);
-  $: anims = animAssets(echoes);
-  $: aspectRatio = isMobile
-    ? document.documentElement.clientWidth /
-      document.documentElement.clientHeight
-    : 16 / 9;
-  $: grid = isMobile ? [3, 7] : [9, 5];
-
-  let echoesVisible = false;
-
-  const circle = `M35,70a35,35 0 1,0 70,0a35,35 0 1,0 -70,0`;
-  const echoes = isMobile ? 6 : 10;
-
-  onMount(async () => {
-    resizeObserver.observe(document.querySelector("#app"));
-    document.body.style.background = "white";
-    await tick();
-    ScrollTrigger.sort(); // use the defaults (typically best)
-    // ScrollSmoother.normalizeScroll = true;
-  });
-
-  const resizeObserver = new ResizeObserver(
-    () =>
-      (isMobile = window.matchMedia(
-        "(orientation : portrait), (max-width : 675px)"
-      ).matches)
+  let echoesVisible = $state(false);
+  /** @type {HTMLDivElement | undefined} */
+  let smoothWrapper;
+  /** @type {HTMLDivElement | undefined} */
+  let smoothContent;
+  let introContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let introTimeline = $state(/** @type {any} */ (null));
+  let cheesyContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let cheesyTimeline = $state(/** @type {any} */ (null));
+  let typographicContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let typographicTimeline = $state(/** @type {any} */ (null));
+  let poeticContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let poeticTimeline = $state(/** @type {any} */ (null));
+  let fishContainer = $state(/** @type {HTMLDivElement | undefined} */ (undefined));
+  let fishTimeline = $state(/** @type {any} */ (null));
+  /** @type {any} */
+  let smoother = null;
+  let viewportWidth = $state(
+    typeof window === "undefined" ? 1440 : window.innerWidth,
+  );
+  let viewportHeight = $state(
+    typeof window === "undefined" ? 900 : window.innerHeight,
   );
 
-  const clamp = (n, min, max) => (n > max ? max : n < min ? min : n);
+  const isMobile = $derived(appState.isMobile);
+  const echoes = $derived(isMobile ? 6 : 10);
+  const grid = $derived(isMobile ? [3, 7] : [9, 5]);
+  const onScrolls = $derived(onScrollAssets(elementsCheesy, isMobile));
+  const anims = $derived(animAssets(echoes));
+  const aspectRatio = $derived(
+    isMobile ? viewportWidth / Math.max(viewportHeight, 1) : 16 / 9,
+  );
+  const interpolators = $derived.by(() => {
+    return typographicPaths.map((path) => {
+      if (!Array.isArray(path)) {
+        return null;
+      }
 
-  let interpolators = typographicPaths.map((p, i) => {
-    if (Array.isArray(p))
-      return p[1]
+      return path[1]
         ? [
-            interpolate([circle, p[0]], { precision: 2 }),
-            interpolate([circle, p[1]], { precision: 2 }),
+            createPathInterpolator(circle, path[0]),
+            createPathInterpolator(circle, path[1]),
           ]
-        : [interpolate([circle, p[0]], { precision: 2 })];
-    else return null;
+        : [createPathInterpolator(circle, path[0])];
+    });
   });
 
-  let waves = ["wave-01.png", "wave-02.png", "wave-03.png"];
+  function updateViewportState() {
+    viewportWidth = document.documentElement.clientWidth;
+    viewportHeight = document.documentElement.clientHeight;
+    setIsMobile(window.matchMedia(MEDIA_QUERY).matches);
+  }
+
+  /** @type {(n: number, min: number, max: number) => number} */
+  const clamp = (n, min, max) => (n > max ? max : n < min ? min : n);
+
+  $effect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(MEDIA_QUERY);
+    const handleViewportChange = () => updateViewportState();
+
+    updateViewportState();
+    mediaQuery.addEventListener("change", handleViewportChange);
+    window.addEventListener("resize", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+      window.removeEventListener("resize", handleViewportChange);
+    };
+  });
+
+  $effect(() => {
+    if (!smoothWrapper || !smoothContent) {
+      return;
+    }
+
+    let cancelled = false;
+
+    tick().then(() => {
+      if (cancelled) {
+        return;
+      }
+
+      document.body.style.background = "white";
+      smoother?.kill();
+      smoother = /** @type {any} */ (ScrollSmoother).create({
+        wrapper: smoothWrapper,
+        content: smoothContent,
+        smooth: 1,
+        effects: true,
+        smoothTouch: 0.1,
+      });
+      ScrollTrigger.sort();
+    });
+
+    return () => {
+      cancelled = true;
+      smoother?.kill();
+      smoother = null;
+    };
+  });
 
   // TODO ANIM CONFIG
 </script>
 
 <!------------------------------------ HTML -------------------------------------------------------------------->
 
-<!-- ANCHOR INTRO ____________________________________________________________________________________________________-->
+<div id="smooth-wrapper" bind:this={smoothWrapper}>
+  <div id="smooth-content" bind:this={smoothContent}>
+    <!-- ANCHOR INTRO ____________________________________________________________________________________________________-->
 
-<Proparent
-  bgColor={"unset"}
-  {aspectRatio}
-  id={"propa-1"}
-  styles={{ justifyContent: "flex-end" }}
-  let:container
-  let:timeline
->
-  <PropaGrid
-    {container}
-    {grid}
-    {timeline}
-    id="propa-1-grid"
-    zIndex={2}
-    width={100}
-    styles={{
-      alignSelf: "flex-start",
-      //rowGap : '5px'
-    }}
-    oddRows={{
-      transform: "translateX(50%)",
-      odd: true,
-    }}
-    animations={{
-      ...anims.intro,
-      start: container?.offsetTop,
-      end: container?.offsetHeight * 1.5,
-    }}
-    onScroll={onScrolls.intro}
-  >
-    {#each { length: grid[0] * grid[1] } as _, i}
-      <div class="balles">
-        <div
-          class:invisible={(!isMobile && i > 21 && i < 27) ||
-            (isMobile && (i == 10 || i == 9 || i == 11))}
-          class="circle-white"
-        />
-        <div
-          class:invisible={(!isMobile && i > 21 && i < 27) ||
-            (isMobile && (i == 10 || i == 9 || i == 11))}
-          class="circle-black"
-        />
-      </div>
-    {/each}
-
-    <div class="title-wrapper propaganda-title-wrapper">
-      <div id="title-propaganda">
-        propaganda
-        <span id="punch-line">Create amazing graphic websites with</span>
-      </div>
-    </div>
-  </PropaGrid>
-
-  <!-- ANCHOR WHETHER YOU LIKE IT ___________________________________________________________________________-->
-
-  <div id="title-whether" style="z-index:5;">whether you like it...</div>
-
-  <!-- ANCHOR MININALIST ___________________________________________________________________________-->
-
-  <PropaGrid
-    {container}
-    {grid}
-    {timeline}
-    background={"black"}
-    zIndex={1}
-    height={isMobile ? "102%" : "100%"}
-    id={"grid-minimalist"}
-  >
-    {#each { length: grid[0] * grid[1] } as _, i}
-      <div
-        class="lignes"
-        class:invisible={(!isMobile && i > 20 && i < 24) ||
-          (isMobile && i == 10)}
+    <Proparent
+      bgColor={"unset"}
+      {aspectRatio}
+      id={"propa-1"}
+      styles={{ justifyContent: "flex-end" }}
+      bind:container={introContainer}
+      bind:timeline={introTimeline}
+    >
+      <PropaGrid
+        container={introContainer}
+        {grid}
+        timeline={introTimeline}
+        id="propa-1-grid"
+        zIndex={2}
+        width={"100%"}
+        styles={{
+          alignSelf: "flex-start",
+          //rowGap : '5px'
+        }}
+        oddRows={{
+          transform: "translateX(50%)",
+          odd: true,
+        }}
+        animations={{
+          ...anims.intro,
+          start: introContainer?.offsetTop,
+          end: (introContainer?.offsetHeight ?? 0) * 1.5,
+        }}
+        onScroll={onScrolls.intro}
       >
-        <div class="ligne">
-          <span
-            style="transform:rotateZ({(i * 0.125) %
-              1}turn); border-radius : 50%;"
-            class="sub-ligne"
-          />
+        {#each { length: grid[0] * grid[1] } as _, i}
+          <div class="balles">
+            <div
+              class:invisible={(!isMobile && i > 21 && i < 27) ||
+                (isMobile && (i == 10 || i == 9 || i == 11))}
+              class="circle-white"
+            ></div>
+            <div
+              class:invisible={(!isMobile && i > 21 && i < 27) ||
+                (isMobile && (i == 10 || i == 9 || i == 11))}
+              class="circle-black"
+            ></div>
+          </div>
+        {/each}
+
+        <div class="title-wrapper propaganda-title-wrapper">
+          <div id="title-propaganda">
+            propaganda
+            <span id="punch-line">Create amazing graphic websites with</span>
+          </div>
+        </div>
+      </PropaGrid>
+
+      <!-- ANCHOR WHETHER YOU LIKE IT ___________________________________________________________________________-->
+
+      <div id="title-whether" style="z-index:5;">whether you like it...</div>
+
+      <!-- ANCHOR MININALIST ___________________________________________________________________________-->
+
+      <PropaGrid
+        container={introContainer}
+        {grid}
+        timeline={introTimeline}
+        background={"black"}
+        zIndex={1}
+        height={isMobile ? "102%" : "100%"}
+        id={"grid-minimalist"}
+      >
+        {#each { length: grid[0] * grid[1] } as _, i}
+          <div
+            class="lignes"
+            class:invisible={(!isMobile && i > 20 && i < 24) ||
+              (isMobile && i == 10)}
+          >
+            <div class="ligne">
+              <span
+                style="transform:rotateZ({(i * 0.125) %
+                  1}turn); border-radius : 50%;"
+                class="sub-ligne"
+              ></span>
+            </div>
+          </div>
+        {/each}
+        <div class="title-wrapper" style="display:contents;">
+          <div id="title-minimalist" style="--fwgt : 600; --fwdt : 120;">
+            minimalist
+          </div>
+        </div>
+      </PropaGrid>
+    </Proparent>
+
+    <!-- ANCHOR CHEESY ____________________________________________________________________________________________________ -->
+
+    <Proparent
+      id={"propa-cheesy"}
+      image={"propaganda/miami/miami-light-pano.jpg"}
+      backgroundSize={"cover"}
+      gradient={"90deg, transparent 0%, black 150%"}
+      styles={{ alignItems: "center", justifyContent: "end" }}
+      bind:container={cheesyContainer}
+      bind:timeline={cheesyTimeline}
+      bind:visible={echoesVisible}
+      end={"+=200%"}
+    >
+      <!-- REVERBERES -->
+      <PropaLayer
+        container={cheesyContainer}
+        timeline={cheesyTimeline}
+        zIndex={3}
+        id={"reverberes"}
+        height={"100%"}
+        onScroll={onScrolls.cheesy}
+      >
+        {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
+          <div
+            class="reverbere"
+            style="width:{(isMobile ? 340 : 12) / elementsCheesy + i * 3}vw"
+          >
+            <img
+              class="reverbere-img"
+              src="/propaganda/miami/reverbere.png"
+              alt="palmier"
+            />
+          </div>
+        {/each}
+      </PropaLayer>
+
+      <!-- PALMIERS -->
+      <PropaLayer
+        container={cheesyContainer}
+        timeline={cheesyTimeline}
+        id={"palmiers"}
+        zIndex={1}
+        height={"100%"}
+      >
+        {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
+          <div
+            class="palmier"
+            style="width:{(isMobile ? 380 : 80) / elementsCheesy + i * 1.5}vw"
+          >
+            <img
+              class="palmier-img"
+              src="/propaganda/miami/palmier-0{(i % 3) + 1}.png"
+              alt="palmier"
+            />
+          </div>
+        {/each}
+      </PropaLayer>
+
+      <!-- ECHOES -->
+
+      <Echoes
+        container={cheesyContainer}
+        timeline={cheesyTimeline}
+        id={"cheesy"}
+        zIndex={9}
+        perspective={100}
+        perspectiveOrigin={isMobile ? [100, 400] : [-100, 200]}
+        styles={{
+          paddingRight: "4vw",
+          fontFamily: `'M PLUS Rounded 1c', sans-serif`,
+          fontWeight: 500,
+          opacity: 0.85,
+        }}
+        title={"CHEESY"}
+        angle={100}
+        echoesDistance={isMobile ? 30 : 14}
+        {echoes}
+        options={{
+          transparency: 10,
+          isoMetric: false,
+          faceOutline: "2px",
+          strokeOutline: "3px",
+          faceColor: "cyan",
+          color: "cyan",
+          outline: true,
+          spreading: "linear",
+          fontSize: isMobile ? 25 : 25,
+          lineSpacing: -15,
+        }}
+        animations={anims.echoes}
+      />
+    </Proparent>
+
+    <!-- ANCHOR TYPOGRAPHIC ___________________________________________________________________________-->
+
+    <Proparent
+      bgColor={"#FCEE21"}
+      {aspectRatio}
+      id={"propa-4-typographic"}
+      styles={{ alignItems: "center", justifyContent: "center" }}
+      end={"+=200%"}
+      bind:container={typographicContainer}
+      bind:timeline={typographicTimeline}
+      exposeProgress={true}
+      bind:progress={appState.typographicScrollProgress}
+    >
+      <div class="title-wrapper">
+        <div id="title-typographic">
+          {#each "typographic" as typo, i}
+            <span
+              style="opacity:{Math.round(
+                6 * ((appState.typographicScrollProgress * 1.4) / (i + 1)),
+              )};"
+            >
+              {typo}
+            </span>
+          {/each}
         </div>
       </div>
-    {/each}
-    <div class="title-wrapper" style="display:contents;">
-      <div id="title-minimalist" style="--fwgt : 600; --fwdt : 120;">
-        minimalist
-      </div>
-    </div>
-  </PropaGrid>
-</Proparent>
 
-<!-- ANCHOR CHEESY ____________________________________________________________________________________________________ -->
-
-<Proparent
-  id={"propa-cheesy"}
-  image={"propaganda/miami/miami-light-pano.jpg"}
-  backgroundSize={"cover"}
-  gradient={"90deg, transparent 0%, black 150%"}
-  styles={{ alignItems: "center", justifyContent: "end" }}
-  let:container
-  let:bgEl
-  let:timeline
-  bind:visible={echoesVisible}
-  end={"+=200%"}
->
-  <!-- REVERBERES -->
-  <PropaLayer
-    {container}
-    {timeline}
-    zIndex={3}
-    id={"reverberes"}
-    height={"100%"}
-    onScroll={onScrolls.cheesy}
-  >
-    {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
-      <div
-        class="reverbere"
-        style="width:{(isMobile ? 340 : 12) / elementsCheesy + i * 3}vw"
+      <PropaGrid
+        container={typographicContainer}
+        timeline={typographicTimeline}
+        grid={[6, 6]}
+        rowSize={15}
+        colSize={15}
+        gridUnits={"vmin"}
+        id={"grid-typographic"}
+        onScroll={onScrolls.typographic}
       >
-        <img
-          class="reverbere-img"
-          src="/propaganda/miami/reverbere.png"
-          alt="palmier"
-        />
-      </div>
-    {/each}
-  </PropaLayer>
-
-  <!-- PALMIERS -->
-  <PropaLayer {container} {timeline} id={"palmiers"} zIndex={1} height={"100%"}>
-    {#each { length: isMobile ? elementsCheesy / 2 : elementsCheesy } as _, i}
-      <div
-        class="palmier"
-        style="width:{(isMobile ? 380 : 80) / elementsCheesy + i * 1.5}vw"
-      >
-        <img
-          class="palmier-img"
-          src="/propaganda/miami/palmier-0{(i % 3) + 1}.png"
-          alt="palmier"
-        />
-      </div>
-    {/each}
-  </PropaLayer>
-
-  <!-- ECHOES -->
-
-  <Echoes
-    {container}
-    {timeline}
-    id={"cheesy"}
-    zIndex={9}
-    perspective={100}
-    perspectiveOrigin={isMobile ? [100, 400] : [-100, 200]}
-    styles={{
-      paddingRight: "4vw",
-      fontFamily: `'M PLUS Rounded 1c', sans-serif`,
-      fontWeight: 500,
-      opacity: 0.85,
-    }}
-    title={"CHEESY"}
-    angle={100}
-    echoesDistance={isMobile ? 30 : 14}
-    {echoes}
-    options={{
-      transparency: 10,
-      isoMetric: false,
-      faceOutline: "2px",
-      strokeOutline: "3px",
-      faceColor: "cyan",
-      color: "cyan",
-      outline: true,
-      spreading: "linear",
-      fontSize: isMobile ? 25 : 25,
-      lineSpacing: -15,
-    }}
-    animations={anims.echoes}
-  />
-</Proparent>
-
-<!-- ANCHOR TYPOGRAPHIC ___________________________________________________________________________-->
-
-<Proparent
-  bgColor={"#FCEE21"}
-  {aspectRatio}
-  id={"propa-4-typographic"}
-  styles={{ alignItems: "center", justifyContent: "center" }}
-  end={"+=200%"}
-  let:container
-  let:timeline
-  exposeProgress={true}
-  bind:progress={$typographicScrollProgress}
->
-  <div class="title-wrapper">
-    <div id="title-typographic">
-      {#each "typographic" as typo, i}
-        <span
-          style="opacity:{Math.round(
-            6 * (($typographicScrollProgress * 1.4) / (i + 1))
-          )};"
-        >
-          {typo}
-        </span>
-      {/each}
-    </div>
-  </div>
-
-  <PropaGrid
-    {container}
-    {timeline}
-    grid={[6, 6]}
-    rowSize={15}
-    colSize={15}
-    gridUnits={"vmin"}
-    id={"grid-typographic"}
-    onScroll={onScrolls.typographic}
-  >
-    {#each typographicPaths as path, i}
-      {#if Array.isArray(path)}
-        <svg
-          id="svg-{i}"
-          class="typo-svg"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 140 140"
-        >
-          {#if i === path.length - 3}
+        {#each typographicPaths as path, i}
+          {#if Array.isArray(path)}
             <svg
-              id="t22"
+              id="svg-{i}"
+              class="typo-svg"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 140 140"
-              ><polygon
-                class="b"
-                points="140 0 126.69 0 102.54 81.07 81.36 0 76.07 0 113.32 140 140 140 140 0"
-              /><path
-                class="b"
-                d="M77.19,121.28V0H12.31V121.28c-.8,12.17-3.79,17.12-12.31,18.55v.17H87.2c-7.61-1.29-10.31-6.28-10.01-18.72Z"
-              /></svg
             >
+              {#if i === path.length - 3}
+                <svg
+                  id="t22"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 140 140"
+                  ><polygon
+                    class="b"
+                    points="140 0 126.69 0 102.54 81.07 81.36 0 76.07 0 113.32 140 140 140 140 0"
+                  /><path
+                    class="b"
+                    d="M77.19,121.28V0H12.31V121.28c-.8,12.17-3.79,17.12-12.31,18.55v.17H87.2c-7.61-1.29-10.31-6.28-10.01-18.72Z"
+                  /></svg
+                >
+              {:else}
+                <path
+                  class="b"
+                  d={interpolators[i]?.[0]?.(
+                    clamp(appState.typographicScrollProgress, 0, 1),
+                  ) ?? circle}
+                />
+                {#if path[1] && interpolators[i]?.[1]}
+                  <path
+                    class="b"
+                    d={interpolators[i]?.[1]?.(
+                      clamp(appState.typographicScrollProgress, 0, 1),
+                    ) ?? circle}
+                  />
+                {/if}
+              {/if}
+            </svg>
           {:else}
-            <path
-              class="b"
-              d={interpolators[i][0](clamp($typographicScrollProgress, 0, 1))}
-            />
-            {#if path[1]}
-              <path
-                class="b"
-                d={interpolators[i][1](clamp($typographicScrollProgress, 0, 1))}
-              />
-            {/if}
+            {@html path}
           {/if}
-        </svg>
-      {:else}
-        {@html path}
-      {/if}
-    {/each}
-  </PropaGrid>
-</Proparent>
+        {/each}
+      </PropaGrid>
+    </Proparent>
 
-<!-- ANCHOR  POETIC ___________________________________________________________________________-->
+    <!-- ANCHOR  POETIC ___________________________________________________________________________-->
 
-<Proparent
-  bgColor={"whitesmoke"}
-  {aspectRatio}
-  id={"propa-3-poetic"}
-  backgroundSize={"cover"}
-  let:container
-  let:timeline
-  end={"+=120%"}
->
-  <!-- POETIC LETTERS -->
-  <PropaGrid
-    {container}
-    {timeline}
-    styles={{ alignSelf: "center", gridRowGap: "30%" }}
-    grid={[3, 2]}
-    width={isMobile ? "70vw" : "35vw"}
-    height={"50vh"}
-    id={"grid-poetic"}
-    onScroll={onScrolls.poetic}
-  >
-    {#each "poetic" as letter, i}
-      <div class="poetic">
-        <img src="/propaganda/letters/{letter}.png" alt={letter} />
-      </div>
-    {/each}
-  </PropaGrid>
-
-  <!-- PLUMES POETIC -->
-  <PropaCentric
-    {container}
-    {timeline}
-    id={"poetic-centric"}
-    radius={90}
-    style={"mix-blend-mode: multiply; align-self : center;"}
-    cx={50}
-    cy={50}
-  >
-    {#each { length: 3 } as _, i}
-      <CentricChild
-        angle={120 * i}
-        animations={true}
-        duration={7}
-        loop={true}
-        ease={"linear"}
-      >
-        <div class="feathers">
-          <img class="feather-img" alt src="/propaganda/feather.png" />
-        </div>
-      </CentricChild>
-    {/each}
-  </PropaCentric>
-</Proparent>
-
-<!-- ANCHOR FISH ____________________________________________________________________________________________________ -->
-<Proparent
-  {aspectRatio}
-  scrollConfig={{ scrub: 2 }}
-  zIndex={3}
-  id={"fish"}
-  let:container
-  let:timeline
-  end={"+=250%"}
->
-  <PropaMask
-    {container}
-    {timeline}
-    id="mask-test"
-    styles={{ opacity: 1 }}
-    clipPath={true}
-    fontSize={isMobile ? 200 : 1000}
-    zIndex={4}
-    font={"mostra-nuova"}
-    fillColor={"white"}
-    text={isMobile ? "O\nR" : "OR"}
-    overlayOpacity={null}
-    onScroll={onScrolls.retrochic}
-  >
-    <!-- ANCHOR  RETROCHIC ___________________________________________________________________________-->
-
-    <svelte:fragment slot="mask-bg">
-      <div class="retrochic-container flexed">
-        <img class="retrochic" src="/pg-bg.png" alt="retrochic" />
-      </div>
+    <Proparent
+      bgColor={"whitesmoke"}
+      {aspectRatio}
+      id={"propa-3-poetic"}
+      backgroundSize={"cover"}
+      bind:container={poeticContainer}
+      bind:timeline={poeticTimeline}
+      end={"+=120%"}
+    >
+      <!-- POETIC LETTERS -->
       <PropaGrid
-        {container}
-        grid={isMobile ? [4, 6] : [6, 5]}
-        cellOverflow={"visible"}
-        background={"black"}
-        id={"retrochic-grid"}
-        animations={anims.retrochic}
-        height={"100vh"}
+        container={poeticContainer}
+        timeline={poeticTimeline}
+        styles={{ alignSelf: "center", gridRowGap: "30%" }}
+        grid={[3, 2]}
+        width={isMobile ? "70vw" : "35vw"}
+        height={"50vh"}
+        id={"grid-poetic"}
+        onScroll={onScrolls.poetic}
       >
-        {#each { length: isMobile ? 24 : 30 } as _, i}
-          <div
-            class="retrochic-element"
-            style="opacity:{0.25 + Math.random() * 0.5}"
-          >
-            <img src="pg-fg.png" alt="texture" class="retrochic-img" />
+        {#each "poetic" as letter, i}
+          <div class="poetic">
+            <img src="/propaganda/letters/{letter}.png" alt={letter} />
           </div>
         {/each}
       </PropaGrid>
-    </svelte:fragment>
-  </PropaMask>
-</Proparent>
 
-<!-- ANCHOR OR ___________________________________________________________________________-->
+      <!-- PLUMES POETIC -->
+      <PropaCentric
+        container={poeticContainer}
+        timeline={poeticTimeline}
+        id={"poetic-centric"}
+        radius={90}
+        style={"mix-blend-mode: multiply; align-self : center;"}
+        cx={50}
+        cy={50}
+      >
+        {#each { length: 3 } as _, i}
+          <CentricChild
+            angle={120 * i}
+            animation={true}
+            duration={7}
+            loop={true}
+            ease={"linear"}
+          >
+            <div class="feathers">
+              <img class="feather-img" alt="" src="/propaganda/feather.png" />
+            </div>
+          </CentricChild>
+        {/each}
+      </PropaCentric>
+    </Proparent>
 
-<Proparent end={"+=100%"} bgColor={"black"}></Proparent>
+    <!-- ANCHOR FISH ____________________________________________________________________________________________________ -->
+    <Proparent
+      {aspectRatio}
+      scrollConfig={{ scrub: 2 }}
+      zIndex={3}
+      id={"fish"}
+      bind:container={fishContainer}
+      bind:timeline={fishTimeline}
+      end={"+=250%"}
+    >
+      <PropaMask
+        container={fishContainer}
+        timeline={fishTimeline}
+        id="mask-test"
+        styles={{ opacity: 1 }}
+        clipPath={true}
+        fontSize={isMobile ? 200 : 1000}
+        zIndex={4}
+        font={"mostra-nuova"}
+        fillColor={"white"}
+        text={isMobile ? "O\nR" : "OR"}
+        overlayOpacity={0}
+        onScroll={onScrolls.retrochic}
+      >
+        <!-- ANCHOR  RETROCHIC ___________________________________________________________________________-->
+
+        {#snippet maskBg()}
+          <div class="retrochic-container flexed">
+            <img class="retrochic" src="/pg-bg.png" alt="retrochic" />
+          </div>
+          <PropaGrid
+            container={fishContainer}
+            grid={isMobile ? [4, 6] : [6, 5]}
+            cellOverflow={"visible"}
+            background={"black"}
+            id={"retrochic-grid"}
+            animations={anims.retrochic}
+            height={"100vh"}
+          >
+            {#each { length: isMobile ? 24 : 30 } as _, i}
+              <div
+                class="retrochic-element"
+                style="opacity:{0.25 + Math.random() * 0.5}"
+              >
+                <img src="pg-fg.png" alt="texture" class="retrochic-img" />
+              </div>
+            {/each}
+          </PropaGrid>
+        {/snippet}
+      </PropaMask>
+    </Proparent>
+
+    <!-- ANCHOR OR ___________________________________________________________________________-->
+
+    <Proparent end={"+=100%"} bgColor={"black"}></Proparent>
+  </div>
+</div>
 
 <style>
   .flexed {
@@ -727,9 +792,27 @@
       white-space: break-spaces;
       text-align: center;
     }
+    .title-wrapper.propaganda-title-wrapper {
+      width: 100vw;
+      align-items: center;
+      justify-content: center;
+    }
     .title-wrapper > div {
       align-self: center;
       margin-right: 0em;
+    }
+    #title-propaganda {
+      left: 50%;
+      transform: translateX(-50%);
+      margin-right: 0;
+      width: max-content;
+      text-align: center;
+    }
+    #punch-line {
+      left: 50%;
+      transform: translateX(-50%);
+      width: max-content;
+      text-align: center;
     }
     .feathers {
       width: 25%;
